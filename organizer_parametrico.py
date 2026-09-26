@@ -7,6 +7,8 @@ della stampa e scomporre i componenti se superano il piatto della stampante.
 """
 
 import bpy
+import math
+import bmesh
 from mathutils import Vector
 
 MM = 0.001
@@ -196,16 +198,60 @@ def fixed_guide(name, sign, inner_face, rail_len, z, vertical, col, mat):
     return guide
 
 
-def add_tray_handle(tray, cy, z, h, td, wall, col, mat):
-    """Presa incassata sul bordo alto del frontale, senza sporgenza."""
-    front = cy - td / 2
-    notch = box("_presa_integrata", (0, front + wall / 2, z + h - 4.9),
-                (42, wall + 0.4, 10.2), col, mat)
-    apply_boolean(tray, notch, "DIFFERENCE")
-    lip = box("_labbro_presa", (0, front - 0.75, z + h - 11.3),
-              (42, 3.5, 3.5), col, mat)
-    apply_boolean(tray, lip, "UNION")
-    tray["maniglia"] = "incavo 42 x 10 mm con labbro da 2.5 mm"
+def add_tray_handle(tray, cy, z, h, td, tw, wall, col, mat):
+    """Presa a tasca: retro diritto e guscio esterno curvo, aperto sopra."""
+    front, top = cy - td / 2, z + h
+    sections, profile_steps = 32, 12
+    half_width = min(30, (tw - 2 * wall) / 2 - 8)
+    max_drop = min(22, h - 5)
+
+    def depth_at(taper, s):
+        return 0.5 + taper * (14 * (1 - s * s) + 1.5 * math.sin(math.pi * s))
+
+    def volume(name, half_width, hollow):
+        verts = []
+        for i in range(sections + 1):
+            x = -half_width + 2 * half_width * i / sections
+            taper = max(0, 1 - (x / half_width) ** 2) ** 1.2
+            drop = 5 + (max_drop - 5) * taper
+            for j in range(profile_steps + 1):
+                v = j / profile_steps
+                if hollow:
+                    zz = top + 2 - (drop - 0.2) * v
+                    s = min(1, max(0, (top - zz) / drop))
+                    depth = max(0.3, depth_at(taper, s) - 1.8)
+                    back = front + wall + 2.0
+                else:
+                    zz = top + 0.2 - (drop + 0.2) * v
+                    depth = depth_at(taper, v)
+                    back = front + 1.5
+                verts.append(Vector((x, front - depth, zz)))
+            verts.append(Vector((x, back, zz)))
+            verts.append(Vector((x, back, top + 2 if hollow else top + 0.2)))
+        ring = profile_steps + 3
+        faces = [tuple(reversed(range(ring))),
+                 tuple(range(sections * ring, (sections + 1) * ring))]
+        for i in range(sections):
+            for j in range(ring):
+                k = (j + 1) % ring
+                faces.append((i * ring + j, i * ring + k,
+                              (i + 1) * ring + k, (i + 1) * ring + j))
+        mesh = bpy.data.meshes.new(name)
+        mesh.from_pydata([tuple(v * MM for v in p) for p in verts], [], faces)
+        mesh.update()
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(mesh)
+        bm.free()
+        ob = bpy.data.objects.new(name, mesh)
+        col.objects.link(ob)
+        mesh.materials.append(mat)
+        return ob
+
+    apply_boolean(tray, volume("_guscio_presa", half_width, False), "UNION")
+    apply_boolean(tray, volume("_vuoto_presa", half_width - 4, True), "DIFFERENCE")
+    tray["maniglia"] = "presa cava a mezza C, aperta sopra, sporgenza 15 mm"
 
 
 def tray_mesh(name, cx, cy, z, width, depth, height, wall, col, mat):
@@ -389,7 +435,7 @@ def build_organizer(c):
         tray = tray_mesh(f"Cassetto_L{level + 1}", 0, tray_y, z + 11,
                          tw, td, h, wall, tray_col, tray_mat)
         cut_tray_grooves(tray, c, 0, tray_y, z + 11, tw, td, tray_col)
-        add_tray_handle(tray, tray_y, z + 11, h, td, wall, tray_col, tray_mat)
+        add_tray_handle(tray, tray_y, z + 11, h, td, tw, wall, tray_col, tray_mat)
         tray["estrazione_frazione"] = c["drawer_open_fraction"] if level == opening_level else 0.0
         make_dividers(c, 0, tray_y, z + 11, tw, td, divider_col, detail_mat)
         # I fermi sono separati e possono essere ricalibrati o rimossi.
@@ -442,6 +488,14 @@ def export_first_level_stls(output_dir, copies=3):
         ev = obj.evaluated_get(depsgraph)
         mesh = ev.to_mesh()
         try:
+            # Triangola le facce con vertici collineari prima dell'STL:
+            # evita bordi a T quando il visualizzatore rilegge il file.
+            triangulated = bmesh.new()
+            triangulated.from_mesh(mesh)
+            bmesh.ops.triangulate(triangulated, faces=list(triangulated.faces),
+                                  quad_method="BEAUTY", ngon_method="BEAUTY")
+            triangulated.to_mesh(mesh)
+            triangulated.free()
             mesh.calc_loop_triangles()
             world = [obj.matrix_world @ v.co for v in mesh.vertices]
             mins = [min(v[i] for v in world) for i in range(3)]

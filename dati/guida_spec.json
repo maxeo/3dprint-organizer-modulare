@@ -9,7 +9,7 @@
   "header": {
     "eyebrow": "Organizer modulare · incastri e presa integrata",
     "h1": "Un modulo, tre livelli configurabili.",
-    "intro_html": "<b>Montanti e traverse hanno tenoni e sedi cieche.</b> Le guide si agganciano con tre linguette per lato; il cassetto ha una presa incassata con un piccolo labbro. Questa guida mostra un modulo standard da ripetere tre volte. Per misure diverse apri il <a href=\"configuratore.html\">configuratore JavaScript</a>.",
+    "intro_html": "<b>Montanti e traverse hanno tenoni e sedi cieche.</b> Le guide si agganciano con tre linguette per lato. Il cassetto ha una presa cava a mezza C, continua con il frontale e aperta verso l’interno. Questa guida mostra un modulo standard da ripetere tre volte. Per misure diverse apri il <a href=\"configuratore.html\">configuratore JavaScript</a>.",
     "facts": [
       {
         "value": "320 × 340 mm",
@@ -34,7 +34,7 @@
     "pitch": 0.55
   },
   "caption": "Un modulo visto dall’alto: ruota, esplodi e seleziona i pezzi. Il frontale aperto è il lato da cui scorre il cassetto.",
-  "model_note_html": "<span class=\"badge\">Prototipo da verificare</span><p>Tenoni dei traversi 6 × 5 × 8 mm con gioco nominale 0,35 mm per lato; tre linguette per guida; presa incassata 42 × 10 mm con labbro da 2,5 mm. Stampa un provino per verificare giochi e portata.</p>",
+  "model_note_html": "<span class=\"badge\">Prototipo da verificare</span><p>Tenoni dei traversi 6 × 5 × 8 mm con gioco nominale 0,35 mm per lato; tre linguette per guida. La presa curva sporge circa 15 mm, arriva al bordo superiore e apre una tasca per le dita verso l’interno del cassetto. Stampa un provino per verificare giochi e portata.</p>",
   "groups": {
     "Telaio": {
       "color": "#d5c8ab"
@@ -58,7 +58,7 @@
       "label": "Cassetto con presa incassata",
       "file": "stl/P01_Cassetto_L1.stl",
       "mode": "mesh",
-      "max_triangles": 2400,
+      "max_triangles": 4000,
       "quantity": 3,
       "group": "Cassetto",
       "print": "vassoio",
@@ -68,12 +68,12 @@
           137.5
         ],
         [
-          -160.5,
+          -172.8611,
           152.0
         ],
         [
           11.0,
-          59.0
+          59.2
         ]
       ]
     },
@@ -442,7 +442,7 @@
     "eyebrow": "01 / Montaggio geometrico",
     "h2": "Assembla un modulo, poi ripeti.",
     "intro_html": "Le posizioni sono ricavate dagli STL. I giunti sono modellati ma i giochi e il comportamento sotto carico vanno provati fisicamente.",
-    "start_html": "<h3>Prima della stampa</h3><p>Controlla il volume del piatto: cassetto 275 × 310 mm, longheroni fino a 312 mm. Stampa un provino del tenone 6 × 5 × 8 mm, delle linguette e delle scanalature.</p>"
+    "start_html": "<h3>Prima della stampa</h3><p>Controlla il volume del piatto: cassetto 275 × 325 mm circa compresa la presa, longheroni fino a 312 mm. Stampa un provino del tenone 6 × 5 × 8 mm, delle linguette e delle scanalature.</p>"
   },
   "steps": [
     {
@@ -581,9 +581,9 @@
       "travel": 15
     },
     {
-      "title": "Inserisci il cassetto",
-      "short": "presa incassata con labbro",
-      "text": "Fai scorrere il cassetto dal fronte. La presa centrale è incassata 10 mm e ha un labbro che sporge solo 2,5 mm; controlla scorrimento e accessibilità.",
+      "title": "Inserisci il cassetto con presa cava",
+      "short": "mezza C aperta verso l’interno",
+      "text": "Fai scorrere il cassetto dal fronte. La presa a mezza C è parte della parete, sporge circa 15 mm e lascia un vuoto aperto verso l’interno per le dita. Controlla scorrimento e accessibilità.",
       "parts": [
         "P01"
       ],
@@ -847,7 +847,11 @@
       },
       {
         "title": "Piano di stampa",
-        "html": "<p>Il cassetto misura 275 × 310 mm (più un labbro di 2,5 mm sul fronte); il longherone più lungo misura 312 mm. Se il piano è più piccolo, ridimensiona dal <a href=\"configuratore.html\">configuratore</a> o progetta una divisione dei pezzi.</p>"
+        "html": "<p>Il cassetto misura 275 × 324,8 mm circa con la presa curva; il longherone più lungo misura 312 mm. Se il piano è più piccolo, ridimensiona dal <a href=\"configuratore.html\">configuratore</a> o progetta una divisione dei pezzi.</p>"
+      },
+      {
+        "title": "Presa cava a mezza C",
+        "html": "<p>Il lato interno della presa resta allineato al cassetto; il guscio esterno si curva fino a circa 15 mm al centro e sfuma ai lati. La tasca è aperta in alto e passa attraverso la parete frontale verso l’interno, per infilare le dita. Il guscio resta unito al cassetto sotto e ai lati.</p><svg viewBox=\"0 0 360 110\" role=\"img\" aria-label=\"Sezione dall’alto della presa cava\"><path d=\"M35 55 H145 M215 55 H325\" stroke=\"#26312c\" stroke-width=\"8\"/><path d=\"M145 55 Q180 110 215 55 L207 55 Q180 91 153 55 Z\" fill=\"#638c78\" stroke=\"#365746\" stroke-width=\"2\"/><text x=\"20\" y=\"28\" font-size=\"13\" fill=\"#26312c\">interno del cassetto</text><text x=\"245\" y=\"91\" font-size=\"13\" fill=\"#26312c\">curva esterna</text></svg>"
       }
     ]
   },

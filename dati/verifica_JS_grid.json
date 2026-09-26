@@ -1,11 +1,11 @@
 [
  {
   "file": "P01_Cassetto_L1.stl",
-  "triangles": 8104,
+  "triangles": 111204,
   "dimensions_mm": [
    275.0,
-   312.5,
-   48.0
+   324.672,
+   48.2
   ],
   "bounds_mm": [
    [
@@ -14,11 +14,11 @@
    ],
    [
     0.0,
-    312.5
+    324.672
    ],
    [
     0.0,
-    48.0
+    48.2
    ]
   ],
   "base_z0": true,
@@ -27,10 +27,10 @@
   "suggested_mode": "mesh",
   "extrusion": {
    "extruded": false,
-   "band_area_ratio": 0.2927,
-   "top_area": 3568.6,
+   "band_area_ratio": 0.3052,
+   "top_area": 196.4,
    "bottom_area": 85250.0,
-   "band_triangles": 2092,
+   "band_triangles": 11820,
    "band_touching_faces": 0
   }
  },

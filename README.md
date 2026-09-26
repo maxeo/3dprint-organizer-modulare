@@ -35,7 +35,9 @@ Questa è una base geometrica per sviluppare le varianti. I longheroni hanno ten
 
 Per rigenerare gli STL dopo una modifica a `CONFIG`, decommenta la riga `export_first_level_stls(...)` in fondo allo script e premi Alt+P. Il formato è millimetri, con Z=0 sul piano di stampa. La guida offline è `guida.html`; la sua sorgente è `dati/guida_spec.json`.
 
-**Stato:** STL preliminari. Cassetto 275 × 312,5 mm compresa la piccola presa frontale, longheroni fino a 312 mm: verifica che entrino nel tuo piano di stampa. I giunti sono modellati ma non ancora calibrati con una stampa; non attribuire una portata alla torre senza prova fisica.
+**Stato:** STL preliminari. Cassetto 275 × 324,8 mm circa compresa la presa frontale, longheroni fino a 312 mm: verifica che entrino nel tuo piano di stampa. I giunti sono modellati ma non ancora calibrati con una stampa; non attribuire una portata alla torre senza prova fisica.
+
+La presa del cassetto è una mezza C integrata nella parete frontale: il guscio esterno curva fino a circa 15 mm di sporgenza e sfuma ai lati. La tasca è aperta fino al bordo superiore e attraversa la parete verso l'interno del cassetto, così si possono infilare le dita. Il guscio resta unito sotto e ai lati. Anche questa zona richiede un provino per verificarne comodità e resistenza.
 
 ## Scanalature modulari
 
@@ -47,4 +49,4 @@ Apri `guida.html` con doppio clic: è una guida offline generata dagli STL stand
 
 Apri `configuratore.html` per modificare larghezza, profondità, altezze, numero di livelli, scanalature e divisori. La pagina aggiorna l'anteprima e crea in JavaScript un ZIP con STL nuovi, `manifest.json`, `configurazione.json` e istruzioni. Non serve Blender né una connessione. Il browser salva un nuovo ZIP: non modifica in silenzio gli STL già presenti nella cartella del progetto.
 
-Gli STL JavaScript usano spigoli vivi; le quote funzionali di tenoni, sedi, guide e cassetto sono allineate al modello Blender. `dati/verifica_JS_grid.json` contiene l'ispezione di una variante a griglia generata in JavaScript: 19 STL, un corpo per file e nessun bordo aperto rilevato.
+Gli STL JavaScript usano spigoli vivi e una versione sfaccettata della curva della presa; le quote funzionali di tenoni, sedi, guide e cassetto sono allineate al modello Blender. `dati/verifica_JS_grid.json` contiene l'ispezione di una variante a griglia generata in JavaScript: 19 STL, un corpo per file e nessun bordo aperto rilevato.
