@@ -27,7 +27,8 @@ def make_config(preset="standard", **overrides):
     cfg = dict(PRESETS[preset])
     cfg.update(dict(
         preset=preset, levels=3, drawer_open_fraction=0.0,
-        divider_mode="lane", wall_mm=3.2,
+        divider_mode="lane", wall_mm=3.2, divider_thickness_mm=2.4,
+        groove_pitch_mm=20.0, groove_width_mm=3.0, groove_depth_mm=1.0,
         side_clearance_mm=0.5, vertical_clearance_mm=0.4,
         post_mm=22.0, joint_mm=8.0, joint_clearance_mm=0.35,
     ))
@@ -49,6 +50,10 @@ def validate(c):
         raise ValueError("drawer_open_fraction deve essere fra 0 e 0.7")
     if c["divider_mode"] not in ("open", "lane", "grid"):
         raise ValueError("divider_mode: open, lane oppure grid")
+    if c["groove_pitch_mm"] < 10 or c["groove_width_mm"] <= c["divider_thickness_mm"]:
+        raise ValueError("Passo o larghezza delle scanalature non validi")
+    if not 0.4 <= c["groove_depth_mm"] <= wall - 1.2:
+        raise ValueError("La scanalatura lascerebbe una parete esterna troppo sottile")
 
 
 def material(name, rgba, metallic=0.0, roughness=0.45):
@@ -160,21 +165,94 @@ def tray_mesh(name, cx, cy, z, width, depth, height, wall, col, mat):
     return obj
 
 
+def slot_positions(span, pitch, margin=12):
+    limit = span / 2 - margin
+    return [i * pitch for i in range(-int(limit // pitch), int(limit // pitch) + 1)]
+
+
+def multi_box_cutter(name, boxes, col):
+    verts, faces = [], []
+    for cx, cy, cz, sx, sy, sz in boxes:
+        x0, x1 = cx - sx / 2, cx + sx / 2
+        y0, y1 = cy - sy / 2, cy + sy / 2
+        z0, z1 = cz - sz / 2, cz + sz / 2
+        start = len(verts)
+        verts.extend([(x0,y0,z0),(x1,y0,z0),(x1,y1,z0),(x0,y1,z0),
+                      (x0,y0,z1),(x1,y0,z1),(x1,y1,z1),(x0,y1,z1)])
+        faces.extend([tuple(start+i for i in face) for face in
+                      ((3,2,1,0),(4,5,6,7),(0,1,5,4),(1,2,6,5),
+                       (2,3,7,6),(3,0,4,7))])
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata([tuple(v * MM for v in xyz) for xyz in verts], [], faces)
+    mesh.update()
+    cutter = bpy.data.objects.new(name, mesh)
+    col.objects.link(cutter)
+    return cutter
+
+
+def cut_tray_grooves(tray, c, cx, cy, z, tw, td, col):
+    wall = c["wall_mm"]
+    pitch = c["groove_pitch_mm"]
+    width = c["groove_width_mm"]
+    depth = c["groove_depth_mm"]
+    height = min(30, c["tray_height_mm"] - wall - 4)
+    xs = slot_positions(tw - 2 * wall, pitch)
+    ys = slot_positions(td - 2 * wall, pitch)
+    floor = z + wall
+    zz = floor + height / 2
+    cut_span = depth + 0.2
+    boxes = []
+    for x in xs:
+        boxes.append((cx+x, cy-td/2+wall-(depth-0.2)/2, zz,
+                      width, cut_span, height))
+        boxes.append((cx+x, cy+td/2-wall+(depth-0.2)/2, zz,
+                      width, cut_span, height))
+    for y in ys:
+        boxes.append((cx-tw/2+wall-(depth-0.2)/2, cy+y, zz,
+                      cut_span, width, height))
+        boxes.append((cx+tw/2-wall+(depth-0.2)/2, cy+y, zz,
+                      cut_span, width, height))
+    cutter = multi_box_cutter("_scanalature_cassetto", boxes, col)
+    apply_boolean(tray, cutter, "DIFFERENCE")
+    tray["passo_scanalature_mm"] = pitch
+    tray["sedi_per_lato_frontale"] = len(xs)
+    tray["sedi_per_lato_laterale"] = len(ys)
+    return xs, ys
+
+
 def make_dividers(c, cx, cy, z, tw, td, col, mat):
     mode = c["divider_mode"]
     if mode == "open":
         return
     wall = c["wall_mm"]
     h = min(30, c["tray_height_mm"] - wall - 4)
-    thick = 2.4
+    thick = c["divider_thickness_mm"]
+    groove = c["groove_depth_mm"]
+    slot_width = c["groove_width_mm"]
+    pitch = c["groove_pitch_mm"]
     floor = z + wall
-    box("Divisorio_longitudinale", (cx, cy, floor + h / 2),
-        (thick, td - 2 * wall - 1, h), col, mat, 0.25)
+    longitudinal = box("Divisorio_longitudinale", (cx, cy, floor + h / 2),
+                       (thick, td - 2 * wall + 2 * groove - 0.4, h), col, mat)
+    yslots = slot_positions(td - 2 * wall, pitch)
+    notches = [(cx, cy+y, floor + 3*h/4, thick+1, slot_width, h/2+0.1)
+               for y in yslots]
+    apply_boolean(longitudinal,
+                  multi_box_cutter("_intagli_divisorio_lungo", notches, col),
+                  "DIFFERENCE")
+    longitudinal["intagli_trasversali"] = len(yslots)
     if mode == "grid":
-        for i in (1, 2, 3):
-            yy = cy - td / 2 + wall + (td - 2 * wall) * i / 4
-            box(f"Divisorio_trasversale_{i}", (cx, yy, floor + h / 2),
-                (tw - 2 * wall - 1, thick, h), col, mat, 0.25)
+        target = (td - 2 * wall) / 4
+        selected = [min(yslots, key=lambda y: abs(y - wanted))
+                    for wanted in (-target, 0, target)]
+        for i, y in enumerate(dict.fromkeys(selected), 1):
+            cross = box(f"Divisorio_trasversale_{i}",
+                        (cx, cy+y, floor + h/2),
+                        (tw - 2*wall + 2*groove - 0.4, thick, h), col, mat)
+            notch = multi_box_cutter("_intaglio_divisorio_traverso",
+                                     [(cx, cy+y, floor+h/4,
+                                       slot_width, thick+1, h/2+0.1)], col)
+            apply_boolean(cross, notch, "DIFFERENCE")
+            cross["posizione_sede_mm"] = y
 
 
 def build_organizer(c):
@@ -242,6 +320,7 @@ def build_organizer(c):
         tray_y = -3 + (drawer_shift if level == opening_level else 0)
         tray = tray_mesh(f"Cassetto_L{level + 1}", 0, tray_y, z + 11,
                          tw, td, h, wall, tray_col, tray_mat)
+        cut_tray_grooves(tray, c, 0, tray_y, z + 11, tw, td, tray_col)
         tray["estrazione_frazione"] = c["drawer_open_fraction"] if level == opening_level else 0.0
         make_dividers(c, 0, tray_y, z + 11, tw, td, divider_col, detail_mat)
         # I fermi sono separati e possono essere ricalibrati o rimossi.
@@ -260,6 +339,7 @@ def build_organizer(c):
     scene["Organizer | passo mm"] = pitch
     scene["Organizer | gioco laterale mm"] = side
     scene["Organizer | gioco verticale mm"] = vertical
+    scene["Organizer | passo scanalature mm"] = c["groove_pitch_mm"]
     for ob in bpy.context.selected_objects:
         ob.select_set(False)
     bpy.context.view_layer.objects.active = None

@@ -36,3 +36,7 @@ Questa è una base geometrica per sviluppare le varianti. Prima di stampare biso
 Per rigenerare gli STL dopo una modifica a `CONFIG`, decommenta la riga `export_first_level_stls(...)` in fondo allo script e premi Alt+P. Il formato è millimetri, con Z=0 sul piano di stampa. La guida offline è `guida.html`; la sua sorgente è `dati/guida_spec.json`.
 
 **Stato:** STL preliminari. Cassetto 275 × 310 mm, longheroni fino a 318 mm: verifica che entrino nel tuo piano di stampa. I contatti tra longheroni e montanti nel modello non sono ancora incastri meccanici completi; non attribuire una portata alla torre senza riprogettazione e prova fisica.
+
+## Scanalature modulari
+
+Il cassetto ha sedi verticali su tutti e quattro i lati, a passo 20 mm. Nello standard ci sono 13 posizioni per ciascun lato, larghe 3,0 mm e profonde 1,0 mm: resta una parete esterna di 2,2 mm. Il divisorio longitudinale è spesso 2,4 mm, entra nelle sedi alle estremità e ha intagli superiori ripetuti per traversi opzionali. In modalità `grid` tre traversi si montano a −80, 0 e +80 mm con intaglio inferiore a mezzo spessore. Verificare il gioco reale con un provino prima della stampa completa.

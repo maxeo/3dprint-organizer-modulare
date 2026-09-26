@@ -1,7 +1,7 @@
 [
  {
   "file": "P01_Cassetto_L1.stl",
-  "triangles": 28,
+  "triangles": 1068,
   "dimensions_mm": [
    275.0,
    310.0,
@@ -27,19 +27,19 @@
   "suggested_mode": "mesh",
   "extrusion": {
    "extruded": false,
-   "band_area_ratio": 0.2934,
+   "band_area_ratio": 0.2909,
    "top_area": 3703.0,
    "bottom_area": 85250.0,
-   "band_triangles": 2,
+   "band_triangles": 522,
    "band_touching_faces": 0
   }
  },
  {
   "file": "P02_Divisorio_longitudinale.stl",
-  "triangles": 108,
+  "triangles": 220,
   "dimensions_mm": [
    2.4,
-   302.6,
+   305.2,
    30.0
   ],
   "bounds_mm": [
@@ -49,7 +49,7 @@
    ],
    [
     0.0,
-    302.6
+    305.2
    ],
    [
     0.0,
@@ -62,11 +62,11 @@
   "suggested_mode": "mesh",
   "extrusion": {
    "extruded": false,
-   "band_area_ratio": 0.0238,
-   "top_area": 574.0,
-   "bottom_area": 574.0,
-   "band_triangles": 80,
-   "band_touching_faces": 32
+   "band_area_ratio": 0.0048,
+   "top_area": 638.9,
+   "bottom_area": 732.5,
+   "band_triangles": 26,
+   "band_touching_faces": 0
   }
  },
  {
