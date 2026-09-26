@@ -28,3 +28,11 @@ Il modello distingue telaio, guide, cassetti e divisori in collezioni. La strutt
 ## Stato del prototipo
 
 Questa è una base geometrica per sviluppare le varianti. Prima di stampare bisogna misurare lo spazio reale, calibrare i giochi con un provino, definire giunti tra longheroni e montanti e suddividere i pezzi che superano il piano di stampa.
+
+## STL e guida HTML
+
+`stl/` contiene i 18 pezzi distinti del primo modulo standard. Per la torre a tre livelli occorrono tre copie di ogni file. `stl/manifest.json` registra quote e posizioni di montaggio; `dati/verifica_STL.json` riporta il controllo digitale dei file esportati.
+
+Per rigenerare gli STL dopo una modifica a `CONFIG`, decommenta la riga `export_first_level_stls(...)` in fondo allo script e premi Alt+P. Il formato è millimetri, con Z=0 sul piano di stampa. La guida offline è `guida.html`; la sua sorgente è `dati/guida_spec.json`.
+
+**Stato:** STL preliminari. Cassetto 275 × 310 mm, longheroni fino a 318 mm: verifica che entrino nel tuo piano di stampa. I contatti tra longheroni e montanti nel modello non sono ancora incastri meccanici completi; non attribuire una portata alla torre senza riprogettazione e prova fisica.

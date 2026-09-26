@@ -266,7 +266,76 @@ def build_organizer(c):
     return root
 
 
+def export_first_level_stls(output_dir, copies=3):
+    """Esporta i pezzi del primo modulo come STL in mm, con manifest per la guida.
+
+    Ogni STL ha il minimo degli assi in 0; assembled_bounds nel manifest
+    permette di ricomporre le posizioni originali nella vista interattiva.
+    """
+    import json
+    import pathlib
+    import re
+    import struct
+
+    root = bpy.data.collections.get(ROOT_NAME)
+    if not root or not root.children:
+        raise RuntimeError("Eseguire build_organizer prima dell'esportazione")
+    level = root.children.get("Livello_01")
+    if level is None:
+        raise RuntimeError("Livello_01 non trovato")
+    out = pathlib.Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    records = []
+    for index, obj in enumerate(sorted(level.all_objects, key=lambda o: o.name), 1):
+        if obj.type != "MESH":
+            continue
+        ev = obj.evaluated_get(depsgraph)
+        mesh = ev.to_mesh()
+        try:
+            mesh.calc_loop_triangles()
+            world = [obj.matrix_world @ v.co for v in mesh.vertices]
+            mins = [min(v[i] for v in world) for i in range(3)]
+            maxs = [max(v[i] for v in world) for i in range(3)]
+            slug = re.sub(r"[^A-Za-z0-9_]+", "_", obj.name)
+            filename = f"P{index:02d}_{slug}.stl"
+            triangles = []
+            for tri in mesh.loop_triangles:
+                points = [tuple((world[j][axis] - mins[axis]) * 1000
+                                for axis in range(3)) for j in tri.vertices]
+                a, b, c = [Vector(p) for p in points]
+                normal = (b - a).cross(c - a)
+                if normal.length < 1e-9:
+                    continue
+                normal.normalize()
+                triangles.append((tuple(normal), *points))
+            with (out / filename).open("wb") as file:
+                file.write(("Organizer parametrico | " + obj.name).encode("ascii", "replace")[:80].ljust(80, b" "))
+                file.write(struct.pack("<I", len(triangles)))
+                for normal, a, b, c in triangles:
+                    file.write(struct.pack("<12fH", *(normal + a + b + c), 0))
+            records.append(dict(
+                id=f"P{index:02d}", name=obj.name, file=f"stl/{filename}",
+                assembled_bounds=[[round(mins[i] * 1000, 4), round(maxs[i] * 1000, 4)]
+                                  for i in range(3)],
+                dimensions_mm=[round((maxs[i] - mins[i]) * 1000, 4) for i in range(3)],
+                triangles=len(triangles), copies=copies,
+            ))
+        finally:
+            ev.to_mesh_clear()
+    manifest = dict(
+        note="STL geometrici preliminari: giunti telaio e suddivisione per piatto da progettare",
+        unit="mm", source_blend=bpy.data.filepath, parts=records,
+    )
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    print("Esportati", len(records), "STL in", out)
+    return manifest
+
+
 # Cambiare questa riga per creare nuove tipologie e misure.
 CONFIG = make_config("standard", levels=3, divider_mode="lane", drawer_open_fraction=0.32)
 build_organizer(CONFIG)
+# Per aggiornare gli STL dopo una modifica a CONFIG, decommentare la riga seguente
+# e usare Alt+P nel Text Editor. Gli STL esistenti con lo stesso nome saranno aggiornati.
+# export_first_level_stls(r"D:\3D Print\Organizer Modulare\stl", copies=CONFIG["levels"])
 print("Organizer rigenerato:", CONFIG)
