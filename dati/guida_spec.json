@@ -1,0 +1,910 @@
+{
+  "root": "..",
+  "output": "guida.html",
+  "title": "Organizer modulare · guida del prototipo",
+  "theme": {
+    "accent": "#557e6b",
+    "viewer_bg": "#25332e"
+  },
+  "header": {
+    "eyebrow": "Organizer modulare · base parametrica · STL preliminari",
+    "h1": "Un modulo, tre livelli configurabili.",
+    "intro_html": "<b>Il telaio porta il carico; il cassetto resta estraibile.</b> Questa guida mostra un modulo standard da ripetere tre volte. Le scanalature del cassetto e del divisorio sono a passo 20 mm. Per cambiare misure e scaricare STL aggiornati senza Blender, apri il <a href=\"configuratore.html\">configuratore JavaScript</a>.",
+    "facts": [
+      {
+        "value": "320 × 340 mm",
+        "label": "impronta esterna"
+      },
+      {
+        "value": "106 mm",
+        "label": "passo per livello"
+      },
+      {
+        "value": "13 + 13",
+        "label": "sedi per lato"
+      },
+      {
+        "value": "18 STL",
+        "label": "pezzi del modulo"
+      }
+    ]
+  },
+  "camera": {
+    "yaw": -0.66,
+    "pitch": 0.55
+  },
+  "caption": "Un modulo visto dall’alto: ruota, esplodi e seleziona i pezzi. Il frontale aperto è il lato da cui scorre il cassetto.",
+  "model_note_html": "<span class=\"badge\">Prototipo geometrico</span><p>Le pareti del cassetto hanno sedi da 3,0 × 1,0 mm a passo 20 mm. I contatti dei longheroni con i montanti non sono ancora giunti meccanici definitivi.</p>",
+  "groups": {
+    "Telaio": {
+      "color": "#d5c8ab"
+    },
+    "Guide": {
+      "color": "#4d5559"
+    },
+    "Cassetto": {
+      "color": "#638c78"
+    },
+    "Divisori": {
+      "color": "#b97058"
+    },
+    "Fermi": {
+      "color": "#d09a62"
+    }
+  },
+  "parts": [
+    {
+      "id": "P01",
+      "label": "Cassetto",
+      "file": "stl/P01_Cassetto_L1.stl",
+      "mode": "mesh",
+      "max_triangles": 2400,
+      "quantity": 3,
+      "group": "Cassetto",
+      "print": "vassoio",
+      "assembled_bounds": [
+        [
+          -137.5,
+          137.5
+        ],
+        [
+          -158.0,
+          152.0
+        ],
+        [
+          11.0,
+          59.0
+        ]
+      ]
+    },
+    {
+      "id": "P02",
+      "label": "Divisorio longitudinale",
+      "file": "stl/P02_Divisorio_longitudinale.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Divisori",
+      "print": "divisori",
+      "assembled_bounds": [
+        [
+          -1.2,
+          1.2
+        ],
+        [
+          -155.6,
+          149.6
+        ],
+        [
+          14.2,
+          44.2
+        ]
+      ]
+    },
+    {
+      "id": "P03",
+      "label": "Fermo D",
+      "file": "stl/P03_Fermo_D.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Fermi",
+      "print": "fermi",
+      "assembled_bounds": [
+        [
+          137.5,
+          140.5
+        ],
+        [
+          136.5,
+          143.5
+        ],
+        [
+          6.5,
+          11.5
+        ]
+      ]
+    },
+    {
+      "id": "P04",
+      "label": "Fermo S",
+      "file": "stl/P04_Fermo_S.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Fermi",
+      "print": "fermi",
+      "assembled_bounds": [
+        [
+          -140.5,
+          -137.5
+        ],
+        [
+          136.5,
+          143.5
+        ],
+        [
+          6.5,
+          11.5
+        ]
+      ]
+    },
+    {
+      "id": "P05",
+      "label": "Guida D appoggio",
+      "file": "stl/P05_Guida_D_appoggio.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Guide",
+      "print": "guide",
+      "assembled_bounds": [
+        [
+          133.0,
+          141.0
+        ],
+        [
+          -148.0,
+          148.0
+        ],
+        [
+          7.6,
+          10.6
+        ]
+      ]
+    },
+    {
+      "id": "P06",
+      "label": "Guida D verticale",
+      "file": "stl/P06_Guida_D_verticale.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Guide",
+      "print": "guide",
+      "assembled_bounds": [
+        [
+          138.0,
+          142.0
+        ],
+        [
+          -148.0,
+          148.0
+        ],
+        [
+          9.0,
+          21.0
+        ]
+      ]
+    },
+    {
+      "id": "P07",
+      "label": "Guida S appoggio",
+      "file": "stl/P07_Guida_S_appoggio.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Guide",
+      "print": "guide",
+      "assembled_bounds": [
+        [
+          -141.0,
+          -133.0
+        ],
+        [
+          -148.0,
+          148.0
+        ],
+        [
+          7.6,
+          10.6
+        ]
+      ]
+    },
+    {
+      "id": "P08",
+      "label": "Guida S verticale",
+      "file": "stl/P08_Guida_S_verticale.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Guide",
+      "print": "guide",
+      "assembled_bounds": [
+        [
+          -142.0,
+          -138.0
+        ],
+        [
+          -148.0,
+          148.0
+        ],
+        [
+          9.0,
+          21.0
+        ]
+      ]
+    },
+    {
+      "id": "P09",
+      "label": "Longherone D alta",
+      "file": "stl/P09_Longherone_D_alta.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          144.0,
+          154.0
+        ],
+        [
+          -159.0,
+          159.0
+        ],
+        [
+          98.0,
+          106.0
+        ]
+      ]
+    },
+    {
+      "id": "P10",
+      "label": "Longherone D bassa",
+      "file": "stl/P10_Longherone_D_bassa.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          144.0,
+          154.0
+        ],
+        [
+          -159.0,
+          159.0
+        ],
+        [
+          0.0,
+          8.0
+        ]
+      ]
+    },
+    {
+      "id": "P11",
+      "label": "Longherone S alta",
+      "file": "stl/P11_Longherone_S_alta.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          -154.0,
+          -144.0
+        ],
+        [
+          -159.0,
+          159.0
+        ],
+        [
+          98.0,
+          106.0
+        ]
+      ]
+    },
+    {
+      "id": "P12",
+      "label": "Longherone S bassa",
+      "file": "stl/P12_Longherone_S_bassa.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          -154.0,
+          -144.0
+        ],
+        [
+          -159.0,
+          159.0
+        ],
+        [
+          0.0,
+          8.0
+        ]
+      ]
+    },
+    {
+      "id": "P13",
+      "label": "Montante DF",
+      "file": "stl/P13_Montante_DF_L1.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          138.0,
+          160.0
+        ],
+        [
+          -170.0,
+          -148.0
+        ],
+        [
+          0.0,
+          112.0
+        ]
+      ]
+    },
+    {
+      "id": "P14",
+      "label": "Montante DR",
+      "file": "stl/P14_Montante_DR_L1.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          138.0,
+          160.0
+        ],
+        [
+          148.0,
+          170.0
+        ],
+        [
+          0.0,
+          112.0
+        ]
+      ]
+    },
+    {
+      "id": "P15",
+      "label": "Montante SF",
+      "file": "stl/P15_Montante_SF_L1.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          -160.0,
+          -138.0
+        ],
+        [
+          -170.0,
+          -148.0
+        ],
+        [
+          0.0,
+          112.0
+        ]
+      ]
+    },
+    {
+      "id": "P16",
+      "label": "Montante SR",
+      "file": "stl/P16_Montante_SR_L1.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          -160.0,
+          -138.0
+        ],
+        [
+          148.0,
+          170.0
+        ],
+        [
+          0.0,
+          112.0
+        ]
+      ]
+    },
+    {
+      "id": "P17",
+      "label": "Traversa posteriore alta",
+      "file": "stl/P17_Traversa_posteriore_alta.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          -149.0,
+          149.0
+        ],
+        [
+          154.0,
+          164.0
+        ],
+        [
+          98.0,
+          106.0
+        ]
+      ]
+    },
+    {
+      "id": "P18",
+      "label": "Traversa posteriore bassa",
+      "file": "stl/P18_Traversa_posteriore_bassa.stl",
+      "mode": "mesh",
+      "max_triangles": 700,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          -149.0,
+          149.0
+        ],
+        [
+          154.0,
+          164.0
+        ],
+        [
+          0.0,
+          8.0
+        ]
+      ]
+    }
+  ],
+  "steps_section": {
+    "eyebrow": "01 / Montaggio geometrico",
+    "h2": "Assembla un modulo, poi ripeti.",
+    "intro_html": "Le posizioni sono ricavate dagli STL. Per i longheroni serve ancora un giunto reale: usa la sequenza come riferimento di progettazione, non come istruzione per caricare la torre.",
+    "start_html": "<h3>Prima della stampa</h3><p>Controlla il volume del piatto: cassetto 275 × 310 mm, longheroni fino a 318 mm. Stampa un provino delle sedi da 3,0 mm e del tenone da 8 mm.</p>"
+  },
+  "steps": [
+    {
+      "title": "Forma il telaio inferiore",
+      "short": "4 montanti · 3 traverse",
+      "text": "Disponi i quattro montanti agli angoli; allinea i due longheroni bassi e la traversa posteriore bassa. Il fronte rimane aperto. Questi contatti richiedono un giunto dedicato in una revisione successiva.",
+      "parts": [
+        "P10",
+        "P12",
+        "P18"
+      ],
+      "built": [
+        "P13",
+        "P14",
+        "P15",
+        "P16",
+        "P10",
+        "P12",
+        "P18"
+      ],
+      "moving": [
+        "P10",
+        "P12",
+        "P18"
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "travel": 30
+    },
+    {
+      "title": "Completa l’anello superiore",
+      "short": "3 traverse alte",
+      "text": "Allinea i longheroni e la traversa posteriori alla sommità. I tenoni quadrati sui montanti servono al collegamento verticale tra livelli.",
+      "parts": [
+        "P09",
+        "P11",
+        "P17"
+      ],
+      "built": [
+        "P13",
+        "P14",
+        "P15",
+        "P16",
+        "P10",
+        "P12",
+        "P18",
+        "P09",
+        "P11",
+        "P17"
+      ],
+      "moving": [
+        "P09",
+        "P11",
+        "P17"
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "travel": 30
+    },
+    {
+      "title": "Posiziona guide e fermi",
+      "short": "guide esterne al cassetto",
+      "text": "Le guide verticali e le mensole inferiori corrono lungo i fianchi. Allinea i due fermi posteriori; verifica che restino accessibili.",
+      "parts": [
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P03",
+        "P04"
+      ],
+      "built": [
+        "P13",
+        "P14",
+        "P15",
+        "P16",
+        "P10",
+        "P12",
+        "P18",
+        "P09",
+        "P11",
+        "P17",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P03",
+        "P04"
+      ],
+      "moving": [
+        "P05",
+        "P06",
+        "P07",
+        "P08"
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "travel": 24
+    },
+    {
+      "title": "Fai scorrere il cassetto",
+      "short": "ingresso dal fronte",
+      "text": "Inserisci il cassetto dal fronte aperto lungo le guide. La larghezza lascia 0,50 mm per lato; controlla manualmente lo scorrimento prima di impilare.",
+      "parts": [
+        "P01"
+      ],
+      "built": [
+        "P13",
+        "P14",
+        "P15",
+        "P16",
+        "P10",
+        "P12",
+        "P18",
+        "P09",
+        "P11",
+        "P17",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P03",
+        "P04",
+        "P01"
+      ],
+      "moving": [
+        "P01"
+      ],
+      "dir": [
+        0,
+        -1,
+        0
+      ],
+      "travel": 160
+    },
+    {
+      "title": "Inserisci il divisorio",
+      "short": "13 posizioni possibili",
+      "text": "Scegli una coppia di sedi contrapposte e abbassa il divisorio. Gli intagli superiori accolgono traversi opzionali; prova la combinazione nel configuratore.",
+      "parts": [
+        "P02"
+      ],
+      "built": [
+        "P13",
+        "P14",
+        "P15",
+        "P16",
+        "P10",
+        "P12",
+        "P18",
+        "P09",
+        "P11",
+        "P17",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P03",
+        "P04",
+        "P01",
+        "P02"
+      ],
+      "moving": [
+        "P02"
+      ],
+      "dir": [
+        0,
+        0,
+        1
+      ],
+      "travel": 35
+    },
+    {
+      "title": "Ripeti e impila",
+      "short": "tre moduli identici",
+      "text": "Prepara altri due moduli. Le sedi alla base dei montanti ricevono i tenoni da 8 mm del livello inferiore. Non caricare la torre finché i giunti laterali e la stabilità non sono stati collaudati.",
+      "parts": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P09",
+        "P10",
+        "P11",
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "P16",
+        "P17",
+        "P18"
+      ],
+      "built": [
+        "P13",
+        "P14",
+        "P15",
+        "P16",
+        "P10",
+        "P12",
+        "P18",
+        "P09",
+        "P11",
+        "P17",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P03",
+        "P04",
+        "P01",
+        "P02"
+      ]
+    }
+  ],
+  "map": {
+    "eyebrow": "02 / Mappa",
+    "h2": "Diciotto STL per un modulo.",
+    "cards": [
+      {
+        "title": "Pezzi e posizioni",
+        "columns": 6,
+        "top_label": "Telaio · guide · cassetto",
+        "bottom_label": "Fronte aperto",
+        "ids": [
+          "P01",
+          "P02",
+          "P03",
+          "P04",
+          "P05",
+          "P06",
+          "P07",
+          "P08",
+          "P09",
+          "P10",
+          "P11",
+          "P12",
+          "P13",
+          "P14",
+          "P15",
+          "P16",
+          "P17",
+          "P18"
+        ],
+        "note_html": "Per tre livelli stampa tre copie di ogni STL; i pezzi speculari restano file separati per rendere chiara la posa."
+      }
+    ],
+    "joints_title": "Giunti da sviluppare",
+    "joints_note_html": "Tenone e sede verticali sono presenti; giunti tra montanti, longheroni e guide richiedono la prossima revisione."
+  },
+  "print": {
+    "eyebrow": "03 / Stampa",
+    "h2": "Lista e parametri iniziali.",
+    "common_html": "<b>Punto di partenza da verificare:</b> PLA/PLA+, ugello 0,4 mm, layer 0,20 mm. Importa gli STL al 100% in millimetri. Dimensioni e giochi non sono ancora calibrati su una stampante reale.",
+    "profiles": [
+      {
+        "key": "struttura",
+        "title": "Montanti e traversi",
+        "rows": [
+          [
+            "Pareti",
+            "5"
+          ],
+          [
+            "Infill",
+            "25%"
+          ],
+          [
+            "Orientamento",
+            "longheroni piatti; montanti verticali con brim"
+          ]
+        ],
+        "why": "Il telaio porta il carico; sono impostazioni iniziali, non una portata certificata. I giunti fra i pezzi non sono definitivi.",
+        "summary": "5 pareti · 25% · prova dei giunti"
+      },
+      {
+        "key": "guide",
+        "title": "Guide laterali",
+        "rows": [
+          [
+            "Pareti",
+            "5"
+          ],
+          [
+            "Infill",
+            "25%"
+          ],
+          [
+            "Orientamento",
+            "piatte sul piano"
+          ]
+        ],
+        "why": "Le superfici di scorrimento devono restare dritte e parallele. Tarare il gioco con un provino.",
+        "summary": "5 pareti · 25% · superficie diritta"
+      },
+      {
+        "key": "vassoio",
+        "title": "Cassetto",
+        "rows": [
+          [
+            "Pareti",
+            "5"
+          ],
+          [
+            "Infill",
+            "20%"
+          ],
+          [
+            "Orientamento",
+            "fondo sul piatto"
+          ]
+        ],
+        "why": "Il fondo e le pareti sostengono il contenuto; verificare che 275 × 310 mm entrino nel piatto.",
+        "summary": "5 pareti · 20% · fondo sul piatto"
+      },
+      {
+        "key": "divisori",
+        "title": "Divisori rimovibili",
+        "rows": [
+          [
+            "Pareti",
+            "3"
+          ],
+          [
+            "Infill",
+            "10–15%"
+          ],
+          [
+            "Orientamento",
+            "piatti"
+          ]
+        ],
+        "why": "I divisori non sono portanti. Gli intagli richiedono una prova di incastro.",
+        "summary": "3 pareti · 10–15% · prova delle sedi"
+      },
+      {
+        "key": "fermi",
+        "title": "Fermi",
+        "rows": [
+          [
+            "Pareti",
+            "4"
+          ],
+          [
+            "Infill",
+            "100%"
+          ],
+          [
+            "Orientamento",
+            "piatti"
+          ]
+        ],
+        "why": "Piccoli pezzi da testare per accessibilità e rilascio.",
+        "summary": "4 pareti · pieno · provino"
+      }
+    ],
+    "note_html": "Gli STL rappresentano un modulo. La colonna quantità indica tre copie per costruire la torre mostrata nella pagina di progetto."
+  },
+  "notes": {
+    "eyebrow": "04 / Dettagli",
+    "h2": "Scanalature e limiti.",
+    "nav": "Dettagli",
+    "cards": [
+      {
+        "title": "Sede e divisorio",
+        "html": "<p>Divisorio <b>2,4 mm</b>, sede <b>3,0 mm</b>: gioco nominale 0,3 mm per lato. La sede entra 1,0 mm nella parete da 3,2 mm, lasciando 2,2 mm esterni. Passo 20 mm.</p><svg viewBox=\"0 0 360 100\" role=\"img\" aria-label=\"Schema sezione sede e divisorio\"><rect x=\"30\" y=\"25\" width=\"125\" height=\"55\" rx=\"3\" fill=\"#638c78\"/><rect x=\"155\" y=\"40\" width=\"14\" height=\"25\" fill=\"#eef4ee\"/><rect x=\"159\" y=\"12\" width=\"10\" height=\"55\" fill=\"#b97058\"/><path d=\"M155 86h14 M155 82v8 M169 82v8\" stroke=\"#26312c\" stroke-width=\"2\"/><text x=\"190\" y=\"57\" font-size=\"15\" fill=\"#26312c\">sede 3,0 × 1,0 mm</text></svg>"
+      },
+      {
+        "title": "Telaio da completare",
+        "html": "<p>Il modello separa montanti, longheroni e guide. Le geometrie si sovrappongono nella posa, ma non hanno ancora incastri laterali o fissaggi progettati. Definire questi giunti prima di usare la torre con carico.</p>"
+      },
+      {
+        "title": "Piano di stampa",
+        "html": "<p>Il cassetto misura 275 × 310 mm; il longherone più lungo 318 mm. Se il piano è più piccolo, serve una variante ridimensionata o una divisione progettata dei pezzi. Il <a href=\"configuratore.html\">configuratore</a> rigenera gli STL dalle nuove quote.</p>"
+      }
+    ]
+  },
+  "files": {
+    "h2": "File del progetto.",
+    "intro_html": "La guida funziona offline. Il configuratore genera pacchetti STL nuovi nel browser; Blender conserva il modello modificabile.",
+    "links": [
+      {
+        "label": "Configuratore senza Blender",
+        "href": "configuratore.html"
+      },
+      {
+        "label": "File Blender",
+        "href": "Organizer_Modulare_Parametrico.blend"
+      },
+      {
+        "label": "Script Python",
+        "href": "organizer_parametrico.py"
+      },
+      {
+        "label": "Manifest STL",
+        "href": "stl/manifest.json"
+      },
+      {
+        "label": "README",
+        "href": "README.md"
+      }
+    ]
+  },
+  "footer_html": "Prototipo parametrico · quote in millimetri · prova fisica necessaria prima dell’uso."
+}

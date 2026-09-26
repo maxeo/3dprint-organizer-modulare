@@ -40,3 +40,11 @@ Per rigenerare gli STL dopo una modifica a `CONFIG`, decommenta la riga `export_
 ## Scanalature modulari
 
 Il cassetto ha sedi verticali su tutti e quattro i lati, a passo 20 mm. Nello standard ci sono 13 posizioni per ciascun lato, larghe 3,0 mm e profonde 1,0 mm: resta una parete esterna di 2,2 mm. Il divisorio longitudinale è spesso 2,4 mm, entra nelle sedi alle estremità e ha intagli superiori ripetuti per traversi opzionali. In modalità `grid` tre traversi si montano a −80, 0 e +80 mm con intaglio inferiore a mezzo spessore. Verificare il gioco reale con un provino prima della stampa completa.
+
+## Guida interattiva e generazione senza Blender
+
+Apri `guida.html` con doppio clic: è una guida offline generata dagli STL standard, con vista 3D, esploso, passaggi, mappa e lista di stampa. La sorgente è `dati/guida_spec.json`.
+
+Apri `configuratore.html` per modificare larghezza, profondità, altezze, numero di livelli, scanalature e divisori. La pagina aggiorna l'anteprima e crea in JavaScript un ZIP con STL nuovi, `manifest.json`, `configurazione.json` e istruzioni. Non serve Blender né una connessione. Il browser salva un nuovo ZIP: non modifica in silenzio gli STL già presenti nella cartella del progetto.
+
+Gli STL JavaScript usano spigoli vivi; il `.blend` aggiunge piccoli raccordi estetici ai pezzi semplici. Le quote funzionali sono allineate. `dati/verifica_JS_grid.json` contiene l'ispezione di una variante a griglia generata nel browser: 21 STL, un corpo per file e nessun bordo aperto rilevato.
