@@ -1,10 +1,10 @@
 [
  {
   "file": "P01_Cassetto_L1.stl",
-  "triangles": 1068,
+  "triangles": 1108,
   "dimensions_mm": [
    275.0,
-   310.0,
+   312.5,
    48.0
   ],
   "bounds_mm": [
@@ -14,7 +14,7 @@
    ],
    [
     0.0,
-    310.0
+    312.5
    ],
    [
     0.0,
@@ -27,10 +27,10 @@
   "suggested_mode": "mesh",
   "extrusion": {
    "extruded": false,
-   "band_area_ratio": 0.2909,
-   "top_area": 3703.0,
+   "band_area_ratio": 0.2927,
+   "top_area": 3568.6,
    "bottom_area": 85250.0,
-   "band_triangles": 522,
+   "band_triangles": 530,
    "band_touching_faces": 0
   }
  },
@@ -140,17 +140,17 @@
   }
  },
  {
-  "file": "P05_Guida_D_appoggio.stl",
-  "triangles": 108,
+  "file": "P05_Guida_D.stl",
+  "triangles": 88,
   "dimensions_mm": [
-   8.0,
+   15.0,
    296.0,
-   3.0
+   13.4
   ],
   "bounds_mm": [
    [
     0.0,
-    8.0
+    15.0
    ],
    [
     0.0,
@@ -158,7 +158,7 @@
    ],
    [
     0.0,
-    3.0
+    13.4
    ]
   ],
   "base_z0": true,
@@ -167,25 +167,25 @@
   "suggested_mode": "mesh",
   "extrusion": {
    "extruded": false,
-   "band_area_ratio": 0.1022,
-   "top_area": 2155.7,
-   "bottom_area": 2155.7,
-   "band_triangles": 80,
-   "band_touching_faces": 32
+   "band_area_ratio": 0.1541,
+   "top_area": 1184.0,
+   "bottom_area": 2368.0,
+   "band_triangles": 16,
+   "band_touching_faces": 0
   }
  },
  {
-  "file": "P06_Guida_D_verticale.stl",
-  "triangles": 108,
+  "file": "P06_Guida_S.stl",
+  "triangles": 88,
   "dimensions_mm": [
-   4.0,
+   15.0,
    296.0,
-   12.0
+   13.4
   ],
   "bounds_mm": [
    [
     0.0,
-    4.0
+    15.0
    ],
    [
     0.0,
@@ -193,7 +193,7 @@
    ],
    [
     0.0,
-    12.0
+    13.4
    ]
   ],
   "base_z0": true,
@@ -202,226 +202,184 @@
   "suggested_mode": "mesh",
   "extrusion": {
    "extruded": false,
-   "band_area_ratio": 0.0685,
-   "top_area": 974.5,
-   "bottom_area": 974.5,
-   "band_triangles": 80,
-   "band_touching_faces": 32
+   "band_area_ratio": 0.1541,
+   "top_area": 1184.0,
+   "bottom_area": 2368.0,
+   "band_triangles": 16,
+   "band_touching_faces": 0
   }
  },
  {
-  "file": "P07_Guida_S_appoggio.stl",
-  "triangles": 108,
-  "dimensions_mm": [
-   8.0,
-   296.0,
-   3.0
-  ],
-  "bounds_mm": [
-   [
-    0.0,
-    8.0
-   ],
-   [
-    0.0,
-    296.0
-   ],
-   [
-    0.0,
-    3.0
-   ]
-  ],
-  "base_z0": true,
-  "unpaired_edges_approx": 0,
-  "bodies": 1,
-  "suggested_mode": "mesh",
-  "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.1022,
-   "top_area": 2155.7,
-   "bottom_area": 2155.7,
-   "band_triangles": 80,
-   "band_touching_faces": 32
-  }
- },
- {
-  "file": "P08_Guida_S_verticale.stl",
-  "triangles": 108,
-  "dimensions_mm": [
-   4.0,
-   296.0,
-   12.0
-  ],
-  "bounds_mm": [
-   [
-    0.0,
-    4.0
-   ],
-   [
-    0.0,
-    296.0
-   ],
-   [
-    0.0,
-    12.0
-   ]
-  ],
-  "base_z0": true,
-  "unpaired_edges_approx": 0,
-  "bodies": 1,
-  "suggested_mode": "mesh",
-  "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.0685,
-   "top_area": 974.5,
-   "bottom_area": 974.5,
-   "band_triangles": 80,
-   "band_touching_faces": 32
-  }
- },
- {
-  "file": "P09_Longherone_D_alta.stl",
-  "triangles": 108,
-  "dimensions_mm": [
-   10.0,
-   318.0,
-   8.0
-  ],
-  "bounds_mm": [
-   [
-    0.0,
-    10.0
-   ],
-   [
-    0.0,
-    318.0
-   ],
-   [
-    0.0,
-    8.0
-   ]
-  ],
-  "base_z0": true,
-  "unpaired_edges_approx": 0,
-  "bodies": 1,
-  "suggested_mode": "mesh",
-  "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.1253,
-   "top_area": 2722.8,
-   "bottom_area": 2722.8,
-   "band_triangles": 80,
-   "band_touching_faces": 32
-  }
- },
- {
-  "file": "P10_Longherone_D_bassa.stl",
-  "triangles": 108,
-  "dimensions_mm": [
-   10.0,
-   318.0,
-   8.0
-  ],
-  "bounds_mm": [
-   [
-    0.0,
-    10.0
-   ],
-   [
-    0.0,
-    318.0
-   ],
-   [
-    0.0,
-    8.0
-   ]
-  ],
-  "base_z0": true,
-  "unpaired_edges_approx": 0,
-  "bodies": 1,
-  "suggested_mode": "mesh",
-  "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.1253,
-   "top_area": 2722.8,
-   "bottom_area": 2722.8,
-   "band_triangles": 80,
-   "band_touching_faces": 32
-  }
- },
- {
-  "file": "P11_Longherone_S_alta.stl",
-  "triangles": 108,
-  "dimensions_mm": [
-   10.0,
-   318.0,
-   8.0
-  ],
-  "bounds_mm": [
-   [
-    0.0,
-    10.0
-   ],
-   [
-    0.0,
-    318.0
-   ],
-   [
-    0.0,
-    8.0
-   ]
-  ],
-  "base_z0": true,
-  "unpaired_edges_approx": 0,
-  "bodies": 1,
-  "suggested_mode": "mesh",
-  "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.1253,
-   "top_area": 2722.8,
-   "bottom_area": 2722.8,
-   "band_triangles": 80,
-   "band_touching_faces": 32
-  }
- },
- {
-  "file": "P12_Longherone_S_bassa.stl",
-  "triangles": 108,
-  "dimensions_mm": [
-   10.0,
-   318.0,
-   8.0
-  ],
-  "bounds_mm": [
-   [
-    0.0,
-    10.0
-   ],
-   [
-    0.0,
-    318.0
-   ],
-   [
-    0.0,
-    8.0
-   ]
-  ],
-  "base_z0": true,
-  "unpaired_edges_approx": 0,
-  "bodies": 1,
-  "suggested_mode": "mesh",
-  "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.1253,
-   "top_area": 2722.8,
-   "bottom_area": 2722.8,
-   "band_triangles": 80,
-   "band_touching_faces": 32
-  }
- },
- {
-  "file": "P13_Montante_DF_L1.stl",
+  "file": "P07_Longherone_D_alta.stl",
   "triangles": 44,
+  "dimensions_mm": [
+   10.0,
+   312.0,
+   8.0
+  ],
+  "bounds_mm": [
+   [
+    0.0,
+    10.0
+   ],
+   [
+    0.0,
+    312.0
+   ],
+   [
+    0.0,
+    8.0
+   ]
+  ],
+  "base_z0": true,
+  "unpaired_edges_approx": 0,
+  "bodies": 1,
+  "suggested_mode": "extruded",
+  "extrusion": {
+   "extruded": true,
+   "band_area_ratio": 0.0172,
+   "top_area": 2960.0,
+   "bottom_area": 2960.0,
+   "band_triangles": 8,
+   "band_touching_faces": 0
+  },
+  "sockets": [],
+  "sockets_summary": {
+   "count": 0,
+   "bore_d": [],
+   "depth": [],
+   "z_center": []
+  }
+ },
+ {
+  "file": "P08_Longherone_D_bassa.stl",
+  "triangles": 94,
+  "dimensions_mm": [
+   10.0,
+   312.0,
+   8.0
+  ],
+  "bounds_mm": [
+   [
+    0.0,
+    10.0
+   ],
+   [
+    0.0,
+    312.0
+   ],
+   [
+    0.0,
+    8.0
+   ]
+  ],
+  "base_z0": true,
+  "unpaired_edges_approx": 0,
+  "bodies": 1,
+  "suggested_mode": "extruded",
+  "extrusion": {
+   "extruded": true,
+   "band_area_ratio": 0.0411,
+   "top_area": 2960.0,
+   "bottom_area": 2960.0,
+   "band_triangles": 20,
+   "band_touching_faces": 0
+  },
+  "sockets": [],
+  "sockets_summary": {
+   "count": 0,
+   "bore_d": [],
+   "depth": [],
+   "z_center": []
+  }
+ },
+ {
+  "file": "P09_Longherone_S_alta.stl",
+  "triangles": 44,
+  "dimensions_mm": [
+   10.0,
+   312.0,
+   8.0
+  ],
+  "bounds_mm": [
+   [
+    0.0,
+    10.0
+   ],
+   [
+    0.0,
+    312.0
+   ],
+   [
+    0.0,
+    8.0
+   ]
+  ],
+  "base_z0": true,
+  "unpaired_edges_approx": 0,
+  "bodies": 1,
+  "suggested_mode": "extruded",
+  "extrusion": {
+   "extruded": true,
+   "band_area_ratio": 0.0172,
+   "top_area": 2960.0,
+   "bottom_area": 2960.0,
+   "band_triangles": 8,
+   "band_touching_faces": 0
+  },
+  "sockets": [],
+  "sockets_summary": {
+   "count": 0,
+   "bore_d": [],
+   "depth": [],
+   "z_center": []
+  }
+ },
+ {
+  "file": "P10_Longherone_S_bassa.stl",
+  "triangles": 94,
+  "dimensions_mm": [
+   10.0,
+   312.0,
+   8.0
+  ],
+  "bounds_mm": [
+   [
+    0.0,
+    10.0
+   ],
+   [
+    0.0,
+    312.0
+   ],
+   [
+    0.0,
+    8.0
+   ]
+  ],
+  "base_z0": true,
+  "unpaired_edges_approx": 0,
+  "bodies": 1,
+  "suggested_mode": "extruded",
+  "extrusion": {
+   "extruded": true,
+   "band_area_ratio": 0.0411,
+   "top_area": 2960.0,
+   "bottom_area": 2960.0,
+   "band_triangles": 20,
+   "band_touching_faces": 0
+  },
+  "sockets": [],
+  "sockets_summary": {
+   "count": 0,
+   "bore_d": [],
+   "depth": [],
+   "z_center": []
+  }
+ },
+ {
+  "file": "P11_Montante_DF_L1.stl",
+  "triangles": 76,
   "dimensions_mm": [
    22.0,
    22.0,
@@ -447,130 +405,130 @@
   "suggested_mode": "mesh",
   "extrusion": {
    "extruded": false,
-   "band_area_ratio": 0.0461,
+   "band_area_ratio": 0.0645,
    "top_area": 64.0,
    "bottom_area": 408.3,
-   "band_triangles": 10,
+   "band_triangles": 18,
    "band_touching_faces": 0
   }
  },
  {
-  "file": "P14_Montante_DR_L1.stl",
-  "triangles": 44,
-  "dimensions_mm": [
-   22.0,
-   22.0,
-   112.0
-  ],
-  "bounds_mm": [
-   [
-    0.0,
-    22.0
-   ],
-   [
-    0.0,
-    22.0
-   ],
-   [
-    0.0,
-    112.0
-   ]
-  ],
-  "base_z0": true,
-  "unpaired_edges_approx": 0,
-  "bodies": 1,
-  "suggested_mode": "mesh",
-  "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.0461,
-   "top_area": 64.0,
-   "bottom_area": 408.3,
-   "band_triangles": 10,
-   "band_touching_faces": 0
-  }
- },
- {
-  "file": "P15_Montante_SF_L1.stl",
-  "triangles": 44,
-  "dimensions_mm": [
-   22.0,
-   22.0,
-   112.0
-  ],
-  "bounds_mm": [
-   [
-    0.0,
-    22.0
-   ],
-   [
-    0.0,
-    22.0
-   ],
-   [
-    0.0,
-    112.0
-   ]
-  ],
-  "base_z0": true,
-  "unpaired_edges_approx": 0,
-  "bodies": 1,
-  "suggested_mode": "mesh",
-  "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.0461,
-   "top_area": 64.0,
-   "bottom_area": 408.3,
-   "band_triangles": 10,
-   "band_touching_faces": 0
-  }
- },
- {
-  "file": "P16_Montante_SR_L1.stl",
-  "triangles": 44,
-  "dimensions_mm": [
-   22.0,
-   22.0,
-   112.0
-  ],
-  "bounds_mm": [
-   [
-    0.0,
-    22.0
-   ],
-   [
-    0.0,
-    22.0
-   ],
-   [
-    0.0,
-    112.0
-   ]
-  ],
-  "base_z0": true,
-  "unpaired_edges_approx": 0,
-  "bodies": 1,
-  "suggested_mode": "mesh",
-  "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.0461,
-   "top_area": 64.0,
-   "bottom_area": 408.3,
-   "band_triangles": 10,
-   "band_touching_faces": 0
-  }
- },
- {
-  "file": "P17_Traversa_posteriore_alta.stl",
+  "file": "P12_Montante_DR_L1.stl",
   "triangles": 108,
   "dimensions_mm": [
-   298.0,
+   22.0,
+   22.0,
+   112.0
+  ],
+  "bounds_mm": [
+   [
+    0.0,
+    22.0
+   ],
+   [
+    0.0,
+    22.0
+   ],
+   [
+    0.0,
+    112.0
+   ]
+  ],
+  "base_z0": true,
+  "unpaired_edges_approx": 0,
+  "bodies": 1,
+  "suggested_mode": "mesh",
+  "extrusion": {
+   "extruded": false,
+   "band_area_ratio": 0.0816,
+   "top_area": 64.0,
+   "bottom_area": 408.3,
+   "band_triangles": 26,
+   "band_touching_faces": 0
+  }
+ },
+ {
+  "file": "P13_Montante_SF_L1.stl",
+  "triangles": 76,
+  "dimensions_mm": [
+   22.0,
+   22.0,
+   112.0
+  ],
+  "bounds_mm": [
+   [
+    0.0,
+    22.0
+   ],
+   [
+    0.0,
+    22.0
+   ],
+   [
+    0.0,
+    112.0
+   ]
+  ],
+  "base_z0": true,
+  "unpaired_edges_approx": 0,
+  "bodies": 1,
+  "suggested_mode": "mesh",
+  "extrusion": {
+   "extruded": false,
+   "band_area_ratio": 0.0645,
+   "top_area": 64.0,
+   "bottom_area": 408.3,
+   "band_triangles": 18,
+   "band_touching_faces": 0
+  }
+ },
+ {
+  "file": "P14_Montante_SR_L1.stl",
+  "triangles": 108,
+  "dimensions_mm": [
+   22.0,
+   22.0,
+   112.0
+  ],
+  "bounds_mm": [
+   [
+    0.0,
+    22.0
+   ],
+   [
+    0.0,
+    22.0
+   ],
+   [
+    0.0,
+    112.0
+   ]
+  ],
+  "base_z0": true,
+  "unpaired_edges_approx": 0,
+  "bodies": 1,
+  "suggested_mode": "mesh",
+  "extrusion": {
+   "extruded": false,
+   "band_area_ratio": 0.0816,
+   "top_area": 64.0,
+   "bottom_area": 408.3,
+   "band_triangles": 26,
+   "band_touching_faces": 0
+  }
+ },
+ {
+  "file": "P15_Traversa_posteriore_alta.stl",
+  "triangles": 44,
+  "dimensions_mm": [
+   292.0,
    10.0,
    8.0
   ],
   "bounds_mm": [
    [
     0.0,
-    298.0
+    292.0
    ],
    [
     0.0,
@@ -584,28 +542,35 @@
   "base_z0": true,
   "unpaired_edges_approx": 0,
   "bodies": 1,
-  "suggested_mode": "mesh",
+  "suggested_mode": "extruded",
   "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.1254,
-   "top_area": 2550.8,
-   "bottom_area": 2550.8,
-   "band_triangles": 80,
-   "band_touching_faces": 32
+   "extruded": true,
+   "band_area_ratio": 0.0184,
+   "top_area": 2760.0,
+   "bottom_area": 2760.0,
+   "band_triangles": 8,
+   "band_touching_faces": 0
+  },
+  "sockets": [],
+  "sockets_summary": {
+   "count": 0,
+   "bore_d": [],
+   "depth": [],
+   "z_center": []
   }
  },
  {
-  "file": "P18_Traversa_posteriore_bassa.stl",
-  "triangles": 108,
+  "file": "P16_Traversa_posteriore_bassa.stl",
+  "triangles": 44,
   "dimensions_mm": [
-   298.0,
+   292.0,
    10.0,
    8.0
   ],
   "bounds_mm": [
    [
     0.0,
-    298.0
+    292.0
    ],
    [
     0.0,
@@ -619,14 +584,21 @@
   "base_z0": true,
   "unpaired_edges_approx": 0,
   "bodies": 1,
-  "suggested_mode": "mesh",
+  "suggested_mode": "extruded",
   "extrusion": {
-   "extruded": false,
-   "band_area_ratio": 0.1254,
-   "top_area": 2550.8,
-   "bottom_area": 2550.8,
-   "band_triangles": 80,
-   "band_touching_faces": 32
+   "extruded": true,
+   "band_area_ratio": 0.0184,
+   "top_area": 2760.0,
+   "bottom_area": 2760.0,
+   "band_triangles": 8,
+   "band_touching_faces": 0
+  },
+  "sockets": [],
+  "sockets_summary": {
+   "count": 0,
+   "bore_d": [],
+   "depth": [],
+   "z_center": []
   }
  }
 ]

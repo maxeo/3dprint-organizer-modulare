@@ -27,15 +27,15 @@ Il modello distingue telaio, guide, cassetti e divisori in collezioni. La strutt
 
 ## Stato del prototipo
 
-Questa è una base geometrica per sviluppare le varianti. Prima di stampare bisogna misurare lo spazio reale, calibrare i giochi con un provino, definire giunti tra longheroni e montanti e suddividere i pezzi che superano il piano di stampa.
+Questa è una base geometrica per sviluppare le varianti. I longheroni hanno tenoni 6 × 5 × 8 mm, i montanti sedi cieche 6,7 × 5,7 × 8,5 mm e le guide tre linguette per lato. Il gioco nominale dei tenoni è 0,35 mm per lato. Prima di stampare bisogna misurare lo spazio reale, calibrare i giochi con provini, verificare scorrimento e portata e suddividere i pezzi che superano il piano di stampa.
 
 ## STL e guida HTML
 
-`stl/` contiene i 18 pezzi distinti del primo modulo standard. Per la torre a tre livelli occorrono tre copie di ogni file. `stl/manifest.json` registra quote e posizioni di montaggio; `dati/verifica_STL.json` riporta il controllo digitale dei file esportati.
+`stl/` contiene i 16 pezzi distinti del primo modulo standard. Per la torre a tre livelli occorrono tre copie di ogni file. `stl/manifest.json` registra quote e posizioni di montaggio; `dati/verifica_STL.json` riporta il controllo digitale dei file esportati.
 
 Per rigenerare gli STL dopo una modifica a `CONFIG`, decommenta la riga `export_first_level_stls(...)` in fondo allo script e premi Alt+P. Il formato è millimetri, con Z=0 sul piano di stampa. La guida offline è `guida.html`; la sua sorgente è `dati/guida_spec.json`.
 
-**Stato:** STL preliminari. Cassetto 275 × 310 mm, longheroni fino a 318 mm: verifica che entrino nel tuo piano di stampa. I contatti tra longheroni e montanti nel modello non sono ancora incastri meccanici completi; non attribuire una portata alla torre senza riprogettazione e prova fisica.
+**Stato:** STL preliminari. Cassetto 275 × 312,5 mm compresa la piccola presa frontale, longheroni fino a 312 mm: verifica che entrino nel tuo piano di stampa. I giunti sono modellati ma non ancora calibrati con una stampa; non attribuire una portata alla torre senza prova fisica.
 
 ## Scanalature modulari
 
@@ -47,4 +47,4 @@ Apri `guida.html` con doppio clic: è una guida offline generata dagli STL stand
 
 Apri `configuratore.html` per modificare larghezza, profondità, altezze, numero di livelli, scanalature e divisori. La pagina aggiorna l'anteprima e crea in JavaScript un ZIP con STL nuovi, `manifest.json`, `configurazione.json` e istruzioni. Non serve Blender né una connessione. Il browser salva un nuovo ZIP: non modifica in silenzio gli STL già presenti nella cartella del progetto.
 
-Gli STL JavaScript usano spigoli vivi; il `.blend` aggiunge piccoli raccordi estetici ai pezzi semplici. Le quote funzionali sono allineate. `dati/verifica_JS_grid.json` contiene l'ispezione di una variante a griglia generata nel browser: 21 STL, un corpo per file e nessun bordo aperto rilevato.
+Gli STL JavaScript usano spigoli vivi; le quote funzionali di tenoni, sedi, guide e cassetto sono allineate al modello Blender. `dati/verifica_JS_grid.json` contiene l'ispezione di una variante a griglia generata in JavaScript: 19 STL, un corpo per file e nessun bordo aperto rilevato.

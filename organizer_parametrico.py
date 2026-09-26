@@ -44,6 +44,8 @@ def validate(c):
         raise ValueError("Larghezza/profondita' insufficiente per montanti e cassetto")
     if h < 20 or gap < 15 or wall < 2.0 or wall >= h / 3:
         raise ValueError("Altezza, luce o spessore parete non validi")
+    if h + gap < 65:
+        raise ValueError("Il passo deve essere almeno 65 mm per separare le sedi dei traversi")
     if not 1 <= c["levels"] <= 8:
         raise ValueError("levels deve essere fra 1 e 8")
     if not 0 <= c["drawer_open_fraction"] <= 0.7:
@@ -129,10 +131,81 @@ def post(name, x, y, z, c, col, mat):
     socket = box("_sede_operazione", (x, y, z + 3.75),
                  (joint + 2 * clearance, joint + 2 * clearance, 7.7), col, mat)
     apply_boolean(body, socket, "DIFFERENCE")
+    # Mortase cieche sui lati interni. I due assi sono sfalsati in quota,
+    # cosi' le sedi dei longheroni laterali e posteriori non si intersecano.
+    side_inner_y = -1 if y < 0 else 1
+    for center_z in (z + 11, z + pitch - 11):
+        cy = y - side_inner_y * (size / 2 - 4.15)
+        cut = box("_sede_laterale", (x, cy, center_z),
+                  (6.7, 8.5, 5.7), col, mat)
+        apply_boolean(body, cut, "DIFFERENCE")
+    if y > 0:
+        side_inner_x = -1 if x < 0 else 1
+        for center_z in (z + 22, z + pitch - 22):
+            cx = x - side_inner_x * (size / 2 - 4.15)
+            cut = box("_sede_posteriore", (cx, y, center_z),
+                      (8.5, 6.7, 5.7), col, mat)
+            apply_boolean(body, cut, "DIFFERENCE")
     body["parte"] = "montante"
     body["sede_mm"] = joint + 2 * clearance
     body["tenone_mm"] = joint
     return body
+
+
+def rail(name, axis, center, span, z, c, col, mat, guide_side=0):
+    """Trave con due tenoni 6 x 5 x 8 mm e sedi eventuali per la guida."""
+    x, y = center
+    post_size = c["post_mm"]
+    full_span = span - 2 * post_size
+    dims = (10, full_span, 8) if axis == "Y" else (full_span, 10, 8)
+    body = box(name, (x, y, z), dims, col, mat)
+    for sign in (-1, 1):
+        if axis == "Y":
+            tc = (x, y + sign * (full_span / 2 + 3.9), z)
+            ts = (6, 8.2, 5)
+        else:
+            tc = (x + sign * (full_span / 2 + 3.9), y, z)
+            ts = (8.2, 6, 5)
+        apply_boolean(body, box("_tenone_trave", tc, ts, col, mat), "UNION")
+    if guide_side:
+        # Tre mortase cieche sul lato interno del longherone basso.
+        gx = guide_side * (abs(x) - 2.85)
+        offset = min(80, full_span / 2 - 15)
+        for gy in (-offset, 0, offset):
+            cut = box("_sede_guida", (gx, gy, z + 0.6),
+                      (4.5, 10.7, 3.7), col, mat)
+            apply_boolean(body, cut, "DIFFERENCE")
+    body["giunto"] = "tenoni 6x5x8 mm, gioco 0.35 mm per lato"
+    return body
+
+
+def fixed_guide(name, sign, inner_face, rail_len, z, vertical, col, mat):
+    """Guida a L monopezzo, con tre linguette verso il longherone."""
+    gx = sign * (inner_face + 2)
+    guide = box(name, (gx, 0, z + 15), (4, rail_len, 12), col, mat)
+    lx = sign * (inner_face - 1)
+    ledge = box("_appoggio_guida", (lx, 0, z + 11 - vertical - 1.5),
+                (8, rail_len, 3), col, mat)
+    apply_boolean(guide, ledge, "UNION")
+    offset = min(80, rail_len / 2 - 15)
+    for gy in (-offset, 0, offset):
+        tab = box("_linguetta_guida", (sign * (inner_face + 6.9), gy, z + 11.6),
+                  (6.2, 10, 3), col, mat)
+        apply_boolean(guide, tab, "UNION")
+    guide["fissaggio"] = "3 linguette nelle sedi del longherone basso"
+    return guide
+
+
+def add_tray_handle(tray, cy, z, h, td, wall, col, mat):
+    """Presa incassata sul bordo alto del frontale, senza sporgenza."""
+    front = cy - td / 2
+    notch = box("_presa_integrata", (0, front + wall / 2, z + h - 4.9),
+                (42, wall + 0.4, 10.2), col, mat)
+    apply_boolean(tray, notch, "DIFFERENCE")
+    lip = box("_labbro_presa", (0, front - 0.75, z + h - 11.3),
+              (42, 3.5, 3.5), col, mat)
+    apply_boolean(tray, lip, "UNION")
+    tray["maniglia"] = "incavo 42 x 10 mm con labbro da 2.5 mm"
 
 
 def tray_mesh(name, cx, cy, z, width, depth, height, wall, col, mat):
@@ -299,28 +372,24 @@ def build_organizer(c):
 
         for sx, xpos in (("S", -w / 2 + post_size / 2),
                          ("D", w / 2 - post_size / 2)):
-            for tag, rail_z in (("bassa", z + 4), ("alta", z + pitch - 4)):
-                box(f"Longherone_{sx}_{tag}", (xpos, 0, rail_z),
-                    (10, d - post_size, 8), frame, frame_mat, 0.7)
-            inner_face = tw / 2 + side
             sign = -1 if sx == "S" else 1
-            guide_x = sign * (inner_face + 2)
-            box(f"Guida_{sx}_verticale", (guide_x, 0, z + 15),
-                (4, rail_len, 12), guides, guide_mat, 0.35)
-            ledge_x = sign * (inner_face - 1)
-            ledge_top = z + 11 - vertical
-            box(f"Guida_{sx}_appoggio", (ledge_x, 0, ledge_top - 1.5),
-                (8, rail_len, 3), guides, guide_mat, 0.35)
+            for tag, rail_z in (("bassa", z + 11), ("alta", z + pitch - 11)):
+                rail(f"Longherone_{sx}_{tag}", "Y", (xpos, 0), d, rail_z,
+                     c, frame, frame_mat, guide_side=sign if tag == "bassa" else 0)
+            inner_face = tw / 2 + side
+            fixed_guide(f"Guida_{sx}", sign, inner_face, rail_len,
+                        z, vertical, guides, guide_mat)
 
-        for tag, rail_z in (("bassa", z + 4), ("alta", z + pitch - 4)):
-            box(f"Traversa_posteriore_{tag}",
-                (0, d / 2 - post_size / 2, rail_z),
-                (w - post_size, 10, 8), frame, frame_mat, 0.7)
+        for tag, rail_z in (("bassa", z + 22), ("alta", z + pitch - 22)):
+            rail(f"Traversa_posteriore_{tag}", "X",
+                 (0, d / 2 - post_size / 2), w, rail_z,
+                 c, frame, frame_mat)
 
         tray_y = -3 + (drawer_shift if level == opening_level else 0)
         tray = tray_mesh(f"Cassetto_L{level + 1}", 0, tray_y, z + 11,
                          tw, td, h, wall, tray_col, tray_mat)
         cut_tray_grooves(tray, c, 0, tray_y, z + 11, tw, td, tray_col)
+        add_tray_handle(tray, tray_y, z + 11, h, td, wall, tray_col, tray_mat)
         tray["estrazione_frazione"] = c["drawer_open_fraction"] if level == opening_level else 0.0
         make_dividers(c, 0, tray_y, z + 11, tw, td, divider_col, detail_mat)
         # I fermi sono separati e possono essere ricalibrati o rimossi.
@@ -404,7 +473,7 @@ def export_first_level_stls(output_dir, copies=3):
         finally:
             ev.to_mesh_clear()
     manifest = dict(
-        note="STL geometrici preliminari: giunti telaio e suddivisione per piatto da progettare",
+        note="Tenoni laterali e posteriori con sedi cieche; guide a linguette e maniglia integrata. Verificare giochi e carico con provini.",
         unit="mm", source_blend=bpy.data.filepath, parts=records,
     )
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
