@@ -35,3 +35,9 @@ Creare in Blender una base scriptabile per organizer modulare autoreggente, con 
 - `dati/verifica_STL.json`: 18 file, 0 spigoli spaiati approssimati, un corpo per file, dimensioni ricavate dagli STL. Cassetto 275 × 310 × 48 mm, montanti 22 × 22 × 112 mm; i pezzi più lunghi arrivano a 318 mm.
 - Il nuovo blocco è nel commit `1af307f`.
 - Prossimo blocco: scrivere `dati/guida_spec.json`, generare `guida.html` con lo script Claude, controllare viste e JS, aggiornare README e handoff con commit separati.
+
+## Aggiornamento — scanalature modulari
+- L'utente ha indicato sull'immagine la necessità di scanalature leggere nel cassetto e nei divisori, con più posizioni.
+- Implementate 13 sedi per lato nello standard, su quattro lati, passo 20 mm, larghezza 3,0 mm, profondità 1,0 mm. Il divisorio longitudinale entra nelle sedi terminali e ha 13 intagli superiori; in modalità grid tre traversi usano sedi a −80/0/+80 mm e intagli inferiori. Parametri configurabili in `make_config`.
+- Verificati in Blender cassetto e divisori manifold; la griglia è stata visualizzata. Ripristinata la torre standard a tre livelli e aggiornati STL, manifest e `dati/verifica_STL.json` (18 file, un corpo e 0 spigoli spaiati approssimati). Commit `d8660f1`.
+- Nuova richiesta: aggiornare geometria e STL direttamente in JavaScript, anche senza Blender. Prossimo blocco: configuratore HTML offline con generazione STL/ZIP parametrica; collegarlo a `guida.html` generata con la skill Claude.
