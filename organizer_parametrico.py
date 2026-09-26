@@ -68,6 +68,13 @@ def collection(name, parent):
     return col
 
 
+def remove_collection_tree(col):
+    """Rimuove anche i discendenti, evitando collezioni orfane a ogni rebuild."""
+    for child in list(col.children):
+        remove_collection_tree(child)
+    bpy.data.collections.remove(col)
+
+
 def move_to_collection(obj, col):
     for old in list(obj.users_collection):
         old.objects.unlink(obj)
@@ -111,7 +118,7 @@ def post(name, x, y, z, c, col, mat):
     joint = c["joint_mm"]
     clearance = c["joint_clearance_mm"]
     body = box(name, (x, y, z + pitch / 2), (size, size, pitch), col, mat)
-    peg = box("_tenone_operazione", (x, y, z + pitch + 3),
+    peg = box("_tenone_operazione", (x, y, z + pitch + 2.9),
               (joint, joint, 6.2), col, mat)
     apply_boolean(body, peg, "UNION")
     socket = box("_sede_operazione", (x, y, z + 3.75),
@@ -176,9 +183,7 @@ def build_organizer(c):
     if prior:
         for ob in list(prior.all_objects):
             bpy.data.objects.remove(ob, do_unlink=True)
-        for child in list(prior.children):
-            bpy.data.collections.remove(child)
-        bpy.data.collections.remove(prior)
+        remove_collection_tree(prior)
 
     root = collection(ROOT_NAME, bpy.context.scene.collection)
     root["configurazione"] = str(c)
@@ -196,6 +201,7 @@ def build_organizer(c):
     tw = w - 2 * post_size - 2 * side
     td = d - post_size - 8
     drawer_shift = -td * c["drawer_open_fraction"]
+    opening_level = 1 if c["levels"] > 1 else 0
     rail_len = d - 2 * post_size
 
     for level in range(c["levels"]):
@@ -233,10 +239,10 @@ def build_organizer(c):
                 (0, d / 2 - post_size / 2, rail_z),
                 (w - post_size, 10, 8), frame, frame_mat, 0.7)
 
-        tray_y = -3 + (drawer_shift if level == 1 else 0)
+        tray_y = -3 + (drawer_shift if level == opening_level else 0)
         tray = tray_mesh(f"Cassetto_L{level + 1}", 0, tray_y, z + 11,
                          tw, td, h, wall, tray_col, tray_mat)
-        tray["estrazione_frazione"] = c["drawer_open_fraction"] if level == 1 else 0.0
+        tray["estrazione_frazione"] = c["drawer_open_fraction"] if level == opening_level else 0.0
         make_dividers(c, 0, tray_y, z + 11, tw, td, divider_col, detail_mat)
         # I fermi sono separati e possono essere ricalibrati o rimossi.
         for sx in (-1, 1):
@@ -249,7 +255,8 @@ def build_organizer(c):
     scene.unit_settings.scale_length = 1.0
     scene.unit_settings.length_unit = "MILLIMETERS"
     scene["Organizer | preset"] = c["preset"]
-    scene["Organizer | L x P x H mm"] = f"{w} x {d} x {c['levels'] * pitch}"
+    scene["Organizer | L x P x telaio mm"] = f"{w} x {d} x {c['levels'] * pitch}"
+    scene["Organizer | altezza con tenoni mm"] = c["levels"] * pitch + 6
     scene["Organizer | passo mm"] = pitch
     scene["Organizer | gioco laterale mm"] = side
     scene["Organizer | gioco verticale mm"] = vertical
