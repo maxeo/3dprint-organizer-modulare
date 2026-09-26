@@ -1,43 +1,32 @@
 # Handoff — Organizer modulare parametrico
 
 ## Obiettivo
-Creare in Blender una base scriptabile per organizer modulare autoreggente, con tipologie e dimensioni variabili. L’HTML in `originale/` è una traccia concettuale, non una specifica vincolante. Salvare tutto nella cartella del progetto.
+Realizzare una base autoreggente e impilabile, trasformabile per tipologia e dimensioni. L’HTML B18 in `originale/` è solo una traccia. L’utente vuole Blender via MCP, STL, guida HTML simile agli altri progetti in `D:\3D Print` e un modo per rigenerare gli STL in JavaScript anche senza Blender. Ha chiesto inoltre scanalature multiple nel cassetto e nei divisori e commit separati per il lavoro e l’handoff.
 
 ## Stato corrente
-- `Organizer_Modulare_Parametrico.blend` contiene la scena standard: 320 × 340 mm, tre livelli da 106 mm, 54 oggetti nella collezione `Organizer_Generato`. Il secondo cassetto è estratto al 32%. Altezza del telaio 318 mm, altezza massima con tenoni 324 mm.
-- `organizer_parametrico.py` è anche incorporato come Text datablock nel `.blend`; modifica `CONFIG` in fondo e usa Alt+P nel Text Editor per rigenerare.
-- Preset disponibili: standard, mezzo, basso, alto, profondo. I parametri dimensionali possono essere sovrascritti liberamente in mm. Divisori open/lane/grid; numero di livelli ed estrazione configurabili.
-- Modello separato in telaio portante, guide fisse, cassetto e divisori. I montanti hanno tenone quadrato da 8 mm e sede con 0,35 mm di gioco per lato.
-- `README.md` documenta uso, parametri ed esempio.
-- Commit del lavoro: `2cafdd4` (base), `f0cfba2` (primo handoff), `68df163` (correzioni e verifiche).
+- `Organizer_Modulare_Parametrico.blend` e `organizer_parametrico.py`: torre standard 320 × 340 mm, tre livelli da 106 mm, cassetto estraibile, telaio portante indipendente. Lo script incorporato nel `.blend` rigenera preset e quote libere.
+- Scanalature a passo 20 mm su tutti i quattro lati interni del cassetto: nello standard 13 posizioni per lato, sede larga 3,0 mm e profonda 1,0 mm nella parete da 3,2 mm. Divisorio da 2,4 mm con intagli superiori ripetuti. In `grid` tre traversi si montano a −80, 0 e +80 mm con intaglio inferiore.
+- `stl/`: 18 STL del modulo standard e `manifest.json`; per una torre a tre livelli stampare tre copie di ogni pezzo. `dati/verifica_STL.json`: quote, 0 spigoli spaiati approssimati e un corpo per file.
+- `guida.html`: pagina offline generata dalla skill Claude `guida-stampa-3d` a partire da `dati/guida_spec.json`, con vista 3D, esploso, passaggi, mappa e lista di stampa. Mostra un modulo standard, da ripetere tre volte.
+- `configuratore.html`: pagina offline autonoma. Modifica dimensioni, livelli, scanalature e divisori; anteprima in pianta; scarica ZIP generato in JS con STL per un modulo, manifest, configurazione e istruzioni. Il browser scarica il ZIP e non sovrascrive i file in `stl/`. Gli STL JS hanno spigoli vivi; il `.blend` usa piccoli raccordi cosmetici.
+- `README.md` spiega uso e limiti; `dati/verifica_JS_grid.json` registra 21 STL della variante griglia generata nel browser.
 
-## Cosa ha funzionato
-- Blender MCP connesso; scena generata e salvata dalla sessione Blender aperta.
-- Cassetto e montante campionati: 0 spigoli non manifold. Cassetto standard 275 × 310 × 48 mm.
-- Verificati i cinque preset: larghezza/profondità, 4 montanti per modulo, cassetto manifold e nessuna crescita delle collezioni ai rebuild.
-- Verificata configurazione libera 237 × 381 mm, due livelli, passo 112 mm; poi ripristinata e salvata la configurazione standard.
-- Script esterno e Text datablock nel `.blend` verificati identici al salvataggio.
+## Verifiche eseguite
+- Blender MCP: vista delle scanalature e della griglia; cassetto e divisori campionati manifold. Scena standard ripristinata e salvata.
+- Analizzatore STL della skill Claude: tutti gli STL standard e i 21 STL JS della griglia hanno un corpo, Z=0 e nessun bordo aperto nel controllo approssimato.
+- JavaScript: sintassi valida; test del calcolo per standard, griglia e quote personalizzate; simulazione DOM del pulsante Scarica; ZIP completo aperto con `zipfile` senza errore CRC. Un primo bug dell’indice centrale ZIP è stato trovato e corretto.
+- Generatore guida: 18 parti, 6 passaggi, nessun avviso su link o posa. Tre script di `guida.html` e quello del configuratore passano `node --check`.
 
-## Cosa non ha funzionato / limiti
-- Una prima versione lasciava collezioni orfane ai rebuild e non estraeva il cassetto con un solo livello; entrambi i difetti sono stati corretti. Le collezioni orfane della sessione sono state rimosse.
-- Git LFS richiede accesso di scrittura alla cartella `.git` anche per alcuni controlli: usare esecuzione con permessi adeguati.
-- Base geometrica, non ancora kit pronto da stampare: longheroni e montanti si intersecano ma non hanno giunti di montaggio definitivi; i pezzi grandi richiedono suddivisione. Le tolleranze vanno calibrate con provini e non è stata fatta una prova fisica di carico/scorrimento.
+## Limiti / cosa non ha funzionato
+- Base ancora preliminare: longheroni, montanti e guide si sovrappongono ma non hanno giunti meccanici completi. Il cassetto standard misura 275 × 310 mm, il longherone più lungo 318 mm; verificare il piano di stampa. Giochi, portata e scorrimento richiedono provini e prova fisica.
+- Il browser integrato ha bloccato `file://` (ammette solo HTTP/HTTPS) e vietato un aggiramento tramite altre superfici. Non è stata possibile una revisione visiva della pagina HTML renderizzata; sono stati eseguiti controlli strutturali, JS e STL. L’utente può aprire i file locali con doppio clic.
+- La guida HTML è una fotografia del set STL standard. Il configuratore genera ZIP nuovi e un’anteprima live, ma non rigenera automaticamente `guida.html`.
 
-## Prossimi passi
-1. Raccogliere dimensioni utili del mobile, altezza libera, carico previsto e volume di stampa.
-2. Progettare i giunti reali tra longheroni e montanti, le clip/fermi rimovibili e la suddivisione per il piano di stampa.
-3. Stampare un provino di tenone/sede e di guida/cassetto; aggiornare i giochi in base alla stampante.
-4. Solo dopo la prova fisica, produrre STL delle tipologie definitive.
+## Come proseguire
+1. Misurare mobile, altezza libera, carico e volume del piano di stampa.
+2. Progettare giunti veri fra longheroni e montanti, attacco delle guide e fermi rimovibili; suddividere i pezzi che non entrano nel piatto.
+3. Stampare provini di tenone/sede e di scanalatura/divisorio; correggere giochi e verificare lo scorrimento.
+4. Dopo modifiche agli STL standard, aggiornare `dati/guida_spec.json` e rigenerare `guida.html` con `C:\Users\matteo\.claude\skills\guida-stampa-3d\scripts\build_guide.py`.
 
-## Aggiornamento — STL per la guida
-- Su richiesta è stata cercata la documentazione nelle cartelle Claude: `C:\Users\matteo\.claude\skills\guida-stampa-3d\SKILL.md` indica il flusso STL → `guida_spec.json` → `guida.html`; gli altri progetti in `D:\3D Print` usano questa struttura.
-- Aggiunto `export_first_level_stls` a `organizer_parametrico.py`, incorporato nel `.blend`. Esporta 18 STL del primo modulo, normalizzati in mm con Z=0, e `stl/manifest.json` con le posizioni assemblate. Per la torre a tre livelli servono tre copie per file.
-- `dati/verifica_STL.json`: 18 file, 0 spigoli spaiati approssimati, un corpo per file, dimensioni ricavate dagli STL. Cassetto 275 × 310 × 48 mm, montanti 22 × 22 × 112 mm; i pezzi più lunghi arrivano a 318 mm.
-- Il nuovo blocco è nel commit `1af307f`.
-- Prossimo blocco: scrivere `dati/guida_spec.json`, generare `guida.html` con lo script Claude, controllare viste e JS, aggiornare README e handoff con commit separati.
-
-## Aggiornamento — scanalature modulari
-- L'utente ha indicato sull'immagine la necessità di scanalature leggere nel cassetto e nei divisori, con più posizioni.
-- Implementate 13 sedi per lato nello standard, su quattro lati, passo 20 mm, larghezza 3,0 mm, profondità 1,0 mm. Il divisorio longitudinale entra nelle sedi terminali e ha 13 intagli superiori; in modalità grid tre traversi usano sedi a −80/0/+80 mm e intagli inferiori. Parametri configurabili in `make_config`.
-- Verificati in Blender cassetto e divisori manifold; la griglia è stata visualizzata. Ripristinata la torre standard a tre livelli e aggiornati STL, manifest e `dati/verifica_STL.json` (18 file, un corpo e 0 spigoli spaiati approssimati). Commit `d8660f1`.
-- Nuova richiesta: aggiornare geometria e STL direttamente in JavaScript, anche senza Blender. Prossimo blocco: configuratore HTML offline con generazione STL/ZIP parametrica; collegarlo a `guida.html` generata con la skill Claude.
+## Commit principali
+`2cafdd4` base Blender · `1af307f` STL · `d8660f1` scanalature · `6f41e21` guida HTML e configuratore. Ogni blocco ha un commit handoff separato.
