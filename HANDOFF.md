@@ -28,3 +28,10 @@ Creare in Blender una base scriptabile per organizer modulare autoreggente, con 
 2. Progettare i giunti reali tra longheroni e montanti, le clip/fermi rimovibili e la suddivisione per il piano di stampa.
 3. Stampare un provino di tenone/sede e di guida/cassetto; aggiornare i giochi in base alla stampante.
 4. Solo dopo la prova fisica, produrre STL delle tipologie definitive.
+
+## Aggiornamento — STL per la guida
+- Su richiesta è stata cercata la documentazione nelle cartelle Claude: `C:\Users\matteo\.claude\skills\guida-stampa-3d\SKILL.md` indica il flusso STL → `guida_spec.json` → `guida.html`; gli altri progetti in `D:\3D Print` usano questa struttura.
+- Aggiunto `export_first_level_stls` a `organizer_parametrico.py`, incorporato nel `.blend`. Esporta 18 STL del primo modulo, normalizzati in mm con Z=0, e `stl/manifest.json` con le posizioni assemblate. Per la torre a tre livelli servono tre copie per file.
+- `dati/verifica_STL.json`: 18 file, 0 spigoli spaiati approssimati, un corpo per file, dimensioni ricavate dagli STL. Cassetto 275 × 310 × 48 mm, montanti 22 × 22 × 112 mm; i pezzi più lunghi arrivano a 318 mm.
+- Il nuovo blocco è nel commit `1af307f`.
+- Prossimo blocco: scrivere `dati/guida_spec.json`, generare `guida.html` con lo script Claude, controllare viste e JS, aggiornare README e handoff con commit separati.
