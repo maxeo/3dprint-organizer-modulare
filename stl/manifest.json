@@ -27,7 +27,7 @@
         224.8611,
         48.2
       ],
-      "triangles": 2622,
+      "triangles": 2942,
       "copies": 3
     },
     {
@@ -114,7 +114,7 @@
       "file": "stl/P05_Longherone_guida_D.stl",
       "assembled_bounds": [
         [
-          98.0,
+          94.8,
           119.0
         ],
         [
@@ -122,16 +122,16 @@
           106.0
         ],
         [
-          6.5,
+          6.0,
           21.0
         ]
       ],
       "dimensions_mm": [
-        21.0,
+        24.2,
         212.0,
-        14.5
+        15.0
       ],
-      "triangles": 216,
+      "triangles": 206,
       "copies": 3
     },
     {
@@ -141,23 +141,23 @@
       "assembled_bounds": [
         [
           -119.0,
-          -98.0
+          -94.8
         ],
         [
           -106.0,
           106.0
         ],
         [
-          6.5,
+          6.0,
           21.0
         ]
       ],
       "dimensions_mm": [
-        21.0,
+        24.2,
         212.0,
-        14.5
+        15.0
       ],
-      "triangles": 212,
+      "triangles": 190,
       "copies": 3
     },
     {
@@ -266,8 +266,60 @@
     },
     {
       "id": "P11",
+      "name": "Perno_ruota",
+      "file": "stl/P11_Perno_ruota.stl",
+      "assembled_bounds": [
+        [
+          -102.2,
+          -93.5
+        ],
+        [
+          -96.36,
+          -92.94
+        ],
+        [
+          12.29,
+          15.71
+        ]
+      ],
+      "dimensions_mm": [
+        8.7,
+        3.42,
+        3.42
+      ],
+      "triangles": 92,
+      "copies": 12
+    },
+    {
+      "id": "P12",
+      "name": "Ruota_cassetto",
+      "file": "stl/P12_Ruota_cassetto.stl",
+      "assembled_bounds": [
+        [
+          -99.0,
+          -96.0
+        ],
+        [
+          -99.65,
+          -89.65
+        ],
+        [
+          9.0,
+          19.0
+        ]
+      ],
+      "dimensions_mm": [
+        3.0,
+        10.0,
+        10.0
+      ],
+      "triangles": 384,
+      "copies": 12
+    },
+    {
+      "id": "P13",
       "name": "Traversa_posteriore_alta",
-      "file": "stl/P11_Traversa_posteriore_alta.stl",
+      "file": "stl/P13_Traversa_posteriore_alta.stl",
       "assembled_bounds": [
         [
           -111.0,
@@ -291,9 +343,9 @@
       "copies": 3
     },
     {
-      "id": "P12",
+      "id": "P14",
       "name": "Traversa_posteriore_bassa",
-      "file": "stl/P12_Traversa_posteriore_bassa.stl",
+      "file": "stl/P14_Traversa_posteriore_bassa.stl",
       "assembled_bounds": [
         [
           -111.0,

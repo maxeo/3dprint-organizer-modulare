@@ -24,7 +24,7 @@
         "label": "sedi per lato"
       },
       {
-        "value": "12 STL",
+        "value": "14 STL",
         "label": "pezzi del modulo"
       }
     ]
@@ -47,6 +47,9 @@
     },
     "Divisori": {
       "color": "#b97058"
+    },
+    "Ruote": {
+      "color": "#d9a441"
     }
   },
   "parts": [
@@ -157,7 +160,7 @@
       "print": "guide",
       "assembled_bounds": [
         [
-          98,
+          94.8,
           119
         ],
         [
@@ -165,7 +168,7 @@
           106
         ],
         [
-          6.5,
+          6,
           21
         ]
       ]
@@ -182,14 +185,14 @@
       "assembled_bounds": [
         [
           -119,
-          -98
+          -94.8
         ],
         [
           -106,
           106
         ],
         [
-          6.5,
+          6,
           21
         ]
       ]
@@ -292,8 +295,100 @@
     },
     {
       "id": "P11",
+      "label": "Perno della ruota",
+      "file": "stl/P11_Perno_ruota.stl",
+      "mode": "mesh",
+      "max_triangles": 200,
+      "quantity": 12,
+      "group": "Ruote",
+      "print": "ruote",
+      "assembled_bounds": [
+        [
+          -102.2,
+          -93.5
+        ],
+        [
+          -96.36,
+          -92.94
+        ],
+        [
+          12.29,
+          15.71
+        ]
+      ],
+      "instances": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          183.3,
+          0
+        ],
+        [
+          195.70000000000002,
+          0,
+          0
+        ],
+        [
+          195.70000000000002,
+          183.3,
+          0
+        ]
+      ]
+    },
+    {
+      "id": "P12",
+      "label": "Ruota del cassetto",
+      "file": "stl/P12_Ruota_cassetto.stl",
+      "mode": "mesh",
+      "max_triangles": 400,
+      "quantity": 12,
+      "group": "Ruote",
+      "print": "ruote",
+      "assembled_bounds": [
+        [
+          -99,
+          -96
+        ],
+        [
+          -99.65,
+          -89.65
+        ],
+        [
+          9,
+          19
+        ]
+      ],
+      "instances": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          183.3,
+          0
+        ],
+        [
+          195,
+          0,
+          0
+        ],
+        [
+          195,
+          183.3,
+          0
+        ]
+      ]
+    },
+    {
+      "id": "P13",
       "label": "Traversa posteriore alta",
-      "file": "stl/P11_Traversa_posteriore_alta.stl",
+      "file": "stl/P13_Traversa_posteriore_alta.stl",
       "mode": "mesh",
       "max_triangles": 2400,
       "quantity": 3,
@@ -315,9 +410,9 @@
       ]
     },
     {
-      "id": "P12",
+      "id": "P14",
       "label": "Traversa posteriore bassa",
-      "file": "stl/P12_Traversa_posteriore_bassa.stl",
+      "file": "stl/P14_Traversa_posteriore_bassa.stl",
       "mode": "mesh",
       "max_triangles": 2400,
       "quantity": 3,
@@ -357,7 +452,7 @@
         "P10",
         "P05",
         "P06",
-        "P12"
+        "P14"
       ],
       "built": [
         "P07",
@@ -366,12 +461,12 @@
         "P10",
         "P05",
         "P06",
-        "P12"
+        "P14"
       ],
       "moving": [
         "P05",
         "P06",
-        "P12"
+        "P14"
       ],
       "dir": [
         0,
@@ -387,7 +482,7 @@
       "parts": [
         "P03",
         "P04",
-        "P11"
+        "P13"
       ],
       "built": [
         "P07",
@@ -396,15 +491,15 @@
         "P10",
         "P05",
         "P06",
-        "P12",
+        "P14",
         "P03",
         "P04",
-        "P11"
+        "P13"
       ],
       "moving": [
         "P03",
         "P04",
-        "P11"
+        "P13"
       ],
       "dir": [
         0,
@@ -416,9 +511,11 @@
     {
       "title": "Inserisci il cassetto con presa cava",
       "short": "mezza C aperta verso l’interno",
-      "text": "Fai scorrere il cassetto dal fronte sulle mensole delle guide fino al fermo. La presa a mezza C è parte della parete, sporge circa 15 mm e lascia un vuoto aperto verso l’interno per le dita. Controlla scorrimento e accessibilità.",
+      "text": "Prima monta le 4 ruote: infila ogni ruota nella sua sede sotto il cassetto e spingi il perno Ø3,42 dall’esterno della sponda fino a filo; il perno resta bloccato dalla guida quando il cassetto è dentro. Fai scorrere il cassetto dal fronte con le ruote sulle mensole delle guide fino al fermo. La presa a mezza C è parte della parete, sporge circa 15 mm e lascia un vuoto aperto verso l’interno per le dita. Controlla scorrimento e accessibilità.",
       "parts": [
-        "P01"
+        "P01",
+        "P11",
+        "P12"
       ],
       "built": [
         "P07",
@@ -427,14 +524,18 @@
         "P10",
         "P05",
         "P06",
-        "P12",
+        "P14",
         "P03",
         "P04",
+        "P13",
+        "P01",
         "P11",
-        "P01"
+        "P12"
       ],
       "moving": [
-        "P01"
+        "P01",
+        "P11",
+        "P12"
       ],
       "dir": [
         0,
@@ -457,12 +558,14 @@
         "P10",
         "P05",
         "P06",
-        "P12",
+        "P14",
         "P03",
         "P04",
-        "P11",
+        "P13",
         "P01",
-        "P02"
+        "P02",
+        "P11",
+        "P12"
       ],
       "moving": [
         "P02"
@@ -490,7 +593,9 @@
         "P09",
         "P10",
         "P11",
-        "P12"
+        "P12",
+        "P13",
+        "P14"
       ],
       "built": [
         "P07",
@@ -499,18 +604,20 @@
         "P10",
         "P05",
         "P06",
-        "P12",
+        "P14",
         "P03",
         "P04",
-        "P11",
+        "P13",
         "P01",
-        "P02"
+        "P02",
+        "P11",
+        "P12"
       ]
     }
   ],
   "map": {
     "eyebrow": "02 / Mappa",
-    "h2": "Dodici STL per un modulo.",
+    "h2": "Quattordici STL per un modulo.",
     "cards": [
       {
         "title": "Pezzi e posizioni",
@@ -529,7 +636,9 @@
           "P09",
           "P10",
           "P11",
-          "P12"
+          "P12",
+          "P13",
+          "P14"
         ],
         "note_html": "Per tre livelli stampa tre copie di ogni STL; i pezzi speculari restano file separati per rendere chiara la posa."
       }
@@ -599,7 +708,7 @@
             "fondo sul piatto"
           ]
         ],
-        "why": "Il fondo e le pareti sostengono il contenuto; con la presa misura 205 × 225 mm, entro un piatto 230 × 230.",
+        "why": "Il fondo e le pareti sostengono il contenuto; con la presa misura 205 × 225 mm, entro un piatto 230 × 230. Le sedi delle ruote sono aperte sotto e non richiedono supporti; il foro quadrato del perno si stampa a ponte.",
         "summary": "5 pareti · 20% · fondo sul piatto"
       },
       {
@@ -621,6 +730,26 @@
         ],
         "why": "I divisori non sono portanti. Gli intagli richiedono una prova di incastro.",
         "summary": "3 pareti · 10–15% · prova delle sedi"
+      },
+      {
+        "key": "ruote",
+        "title": "Ruote e perni",
+        "rows": [
+          [
+            "Ruote",
+            "piatte, 100% infill"
+          ],
+          [
+            "Perni",
+            "in piedi, stesso profilo delle prove Sakura"
+          ],
+          [
+            "Brim",
+            "sui perni, se si staccano"
+          ]
+        ],
+        "why": "Il perno Ø3,42 entra nelle sedi quadrate da 3,4 come i perni Sakura nelle sedi tonde: stesso orientamento e profilo, altrimenti il gioco cambia. Il foro della ruota è 3,8: deve girare libera sul perno.",
+        "summary": "ruote piatte 100% · perni in piedi"
       }
     ],
     "note_html": "Gli STL rappresentano un modulo. La colonna quantità indica tre copie per costruire la torre mostrata nella pagina di progetto."
