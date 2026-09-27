@@ -53,6 +53,8 @@ function mortiseL(axis,cx,cy,inward,z){const off=inward*(8.5/2-(HOOK_LEN+0.7)/2)
 // sedi; ogni pezzo ha un intaglio a ogni sede, quindi si sposta e si incrocia liberamente. 'disegno': schema fatto nel
 // modale (tratti fra sedi vicine); pezzi su misura, intaglio a ogni sede e giunto a T dove un pezzo finisce contro un altro. Intagli a mezzo legno, da un lato solo:
 // longitudinali da sopra, trasversali da sotto. Le vecchie modalità open/lane/grid valgono 0+0, 1+0, 1+3.
+// lettera delle sigle per gruppo: C cassetto, D divisori, G guide, R ruote, T telaio
+const GROUP_LETTER={Cassetto:'C',Divisori:'D',Guide:'G',Ruote:'R',Telaio:'T'};
 const LEGACY_DIV={open:[0,0],lane:[1,0],grid:[1,3]};
 function dividerSpec(c){const l=LEGACY_DIV[c.divider_mode];
   if(l)return {mode:'modulare',long:l[0],cross:l[1]};
@@ -95,6 +97,17 @@ function dividerRuns(c){const {g,v,h}=layoutEdges(c),gd=c.groove_depth_mm,gw=c.g
     runs.push({axis,line:lines[i],u0:end(k,-1),u1:end(e,1),cuts})}};
   scan(v,g.xs,g.yn,'v');scan(h,g.ys,g.xn,'h');
   return runs}
+// Pezzi gemelli: stessa forma in due posizioni (i longheroni guida no: il fermo posteriore li rende speculari). Se le scatole
+// coincidono diventano un pezzo solo, con quantità 2: STL della prima copia, anteprima con tutte e due.
+const TWINS=[['Longherone_D_alta','Longherone_S_alta','Longherone_alta'],['Montante_DF_L1','Montante_SF_L1','Montante_anteriore_L1'],
+  ['Traversa_posteriore_alta','Traversa_posteriore_bassa','Traversa_posteriore']];
+function shapeKey(q,rot){const all=[...q.adds,...(q.late||[])],lo=[0,2,4].map(i=>Math.min(...all.map(b=>b[i]))),hi=[1,3,5].map(i=>Math.max(...all.map(b=>b[i])));
+  // rot: 180° attorno a Z, poi tutto riportato all'angolo minimo dell'ingombro
+  const norm=b=>{const x=rot?[hi[0]-b[1],hi[0]-b[0]]:[b[0]-lo[0],b[1]-lo[0]],y=rot?[hi[1]-b[3],hi[1]-b[2]]:[b[2]-lo[1],b[3]-lo[1]];return [...x,...y,b[4]-lo[2],b[5]-lo[2]].map(v=>round(v,3)).join(',')};
+  return ['adds','subs','late','lateSubs'].map(k=>(q[k]||[]).map(norm).sort().join(';')).join('|')}
+function mergeTwins(p){for(const [a,b,name] of TWINS){const i=p.findIndex(q=>q.name===a),j=p.findIndex(q=>q.name===b);if(i<0||j<0)continue;
+  const A=p[i],B=p[j];if(A.count||B.count||A.stlTris||B.stlTris)continue;const k=shapeKey(A,false);if(k!==shapeKey(B,false)&&k!==shapeKey(B,true))continue;
+  const twin=B;p[i]={...A,name,count:2,twin,order:A.name};p.splice(j,1)}}
 function partsForConfig(c){validate(c);const p=[];const w=c.width_mm,d=c.depth_mm,post=c.post_mm,wall=c.wall_mm,h=c.tray_height_mm,pitch=h+c.clearance_above_mm,side=c.side_clearance_mm,vertical=c.vertical_clearance_mm,tw=w-2*post-2*side,td=d-post-8,cy=-3,rail=d-2*post,gh=Math.min(30,h-wall-4),floor=11+wall,gw=c.groove_width_mm,gd=c.groove_depth_mm,thick=c.divider_thickness_mm;const xs=slots(tw-2*wall,c.groove_pitch_mm),ys=slots(td-2*wall,c.groove_pitch_mm);
   for(const [sx,x] of [['S',-w/2+post/2],['D',w/2-post/2]])for(const [sy,y] of [['F',-d/2+post/2],['R',d/2-post/2]]){let jc=0.35,joint=8,subs=[box(x-(joint+2*jc)/2,x+(joint+2*jc)/2,y-(joint+2*jc)/2,y+(joint+2*jc)/2,-0.1,7.6)];let innerY=y-(y<0?-1:1)*(post/2-4.15);for(const z of [LOW_RAIL,pitch-11])subs.push(...mortiseL('Y',x,innerY,y<0?-1:1,z));if(y>0){let innerX=x-(x<0?-1:1)*(post/2-4.15);for(const z of [22,pitch-22])subs.push(...mortiseL('X',innerX,y,x<0?-1:1,z))}p.push(part(`Montante_${sx}${sy}_L1`,'Telaio',[centered(x,y,pitch/2,post,post,pitch),box(x-joint/2,x+joint/2,y-joint/2,y+joint/2,pitch-0.2,pitch+6)],subs))}
   function beamBoxes(axis,cx,by,span,z){let length=span-2*post,adds=[centered(cx,by,z,axis==='Y'?10:length,axis==='Y'?length:10,8)],tip=length/2+7.9-HOOK_LEN/2,hz=z-2.5-HOOK/2+0.1;for(const s of [-1,1]){adds.push(axis==='Y'?centered(cx,by+s*(length/2+3.9),z,6,8.2,5):centered(cx+s*(length/2+3.9),by,z,8.2,6,5));adds.push(axis==='Y'?centered(cx,by+s*tip,hz,6,HOOK_LEN,HOOK+0.2):centered(cx+s*tip,by,hz,HOOK_LEN,6,HOOK+0.2))}return adds}
@@ -120,10 +133,13 @@ function partsForConfig(c){validate(c);const p=[];const w=c.width_mm,d=c.depth_m
     const T=types.get(key);T.off.push([at[0]-T.ref[0],at[1]-T.ref[1],0])}
   for(const axis of ['v','h']){const list=[...types.values()].filter(T=>T.axis===axis),base=axis==='v'?'Divisorio_longitudinale':'Divisorio_trasversale';
     list.forEach((T,i)=>p.push({...part(list.length>1?`${base}_${i+1}`:base,'Divisori',T.adds,T.subs),count:T.off.length,offsets:T.off}))}
-  return p.sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0).map((v,i)=>({...v,id:`P${String(i+1).padStart(2,'0')}`}))}
+  mergeTwins(p);
+  // sigla con la lettera del gruppo, numerata dentro il gruppo in ordine di nome (come l'export Blender)
+  const seen={},key=q=>q.order||q.name;return p.sort((a,b)=>key(a)<key(b)?-1:key(a)>key(b)?1:0).map(v=>{const L=GROUP_LETTER[v.group]||'P';seen[L]=(seen[L]||0)+1;return {...v,id:`${L}${String(seen[L]).padStart(2,'0')}`}}).sort((a,b)=>a.id<b.id?-1:1)}
 // STL e anteprima: i pezzi cilindrici (ruote, perni) hanno triangoli propri, gli altri passano dalla griglia.
 const stlTris=p=>p.stlTris||meshFromBoxes(p.adds,p.subs,p.late,p.lateSubs);
 const previewTris=p=>{if(p.previewTris)return p.previewTris;const one=previewMesh(p.adds,p.subs,p.late,p.lateSubs);
+  if(p.twin)return one.concat(previewTris(p.twin));
   return p.offsets&&p.offsets.length>1?p.offsets.flatMap(o=>one.map(t=>t.map(q=>[q[0]+o[0],q[1]+o[1],q[2]+o[2]]))):one};
 // Griglia di celle definita dai bordi di tutti i box; le celle piene sono il pezzo.
 // late/lateSubs: seconda passata dopo i vuoti (supporti delle ruote dentro il cassetto e loro sedi).

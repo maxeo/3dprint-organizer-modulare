@@ -33,7 +33,7 @@ Questa è una base geometrica per sviluppare le varianti. I traversi hanno tenon
 
 ## STL e guida HTML
 
-`stl/` contiene i 12 pezzi distinti del primo modulo standard. Per la torre a tre livelli occorrono tre copie di ogni file. `stl/manifest.json` registra quote e posizioni di montaggio.
+`stl/` contiene gli 11 STL del primo modulo standard, con sigle per gruppo: **C** cassetto, **D** divisori, **G** guide, **R** ruote, **T** telaio (numerate dentro il gruppo; nel configuratore i divisori diventano D01, D02, …). I pezzi uguali hanno un solo file: longherone alto (T01), montante anteriore (T02) e traversa posteriore (T05) si stampano due volte per livello. I longheroni guida (G01/G02) e i montanti posteriori (T03/T04) sono speculari e restano distinti. Per la torre a tre livelli: tre copie di ogni file, sei per i pezzi doppi. `stl/manifest.json` registra quote e posizioni di montaggio.
 
 Per rigenerare gli STL dopo una modifica a `CONFIG`, decommenta la riga `export_first_level_stls(...)` in fondo allo script e premi Alt+P. Il formato è millimetri, con Z=0 sul piano di stampa. La guida offline è `guida.html`; la sua sorgente è `dati/guida_spec.json`.
 
@@ -43,7 +43,7 @@ La presa del cassetto è una mezza C integrata nella parete frontale: il guscio 
 
 ## Ruote
 
-Lo standard ha 4 ruote Ø10 × 3 mm sotto il cassetto, due per lato (`wheels=4`). Nel pannello Configura (*Ruote sotto il cassetto*) si sceglie nessuna, 4, 6, 8 o 10: le due estreme stanno vicino a fronte e fondo, le altre a metà fra due sedi dei divisori, distribuite il più possibile in modo uniforme. Senza ruote il cassetto scivola sulla mensola come prima. Ogni ruota sta in un supporto ricavato dentro il cassetto, lontano dalle sedi dei divisori, e gira su un perno Ø3,42 × 8,7 mm (stesso accoppiamento tarato dei perni Sakura: sede quadrata da 3,4, foro della ruota 3,8). Il perno si infila dall’esterno della sponda fino a filo; a cassetto montato resta bloccato dalla guida, a 0,5 mm. La ruota sporge 2 mm sotto il fondo: la mensola della guida si abbassa di conseguenza e si allarga verso l’interno, così il cassetto resta alla stessa quota e il modulo non cresce. Pezzi: `P11_Perno_ruota` e `P12_Ruota_cassetto`, una copia per file, da stampare 4 per cassetto (12 per tre livelli); le traverse sono diventate P13 e P14. Nella guida le ruote compaiono tutte e quattro grazie al campo `instances` dello spec. Non ancora provate in stampa.
+Lo standard ha 4 ruote Ø10 × 3 mm sotto il cassetto, due per lato (`wheels=4`). Nel pannello Configura (*Ruote sotto il cassetto*) si sceglie nessuna, 4, 6, 8 o 10: le due estreme stanno vicino a fronte e fondo, le altre a metà fra due sedi dei divisori, distribuite il più possibile in modo uniforme. Senza ruote il cassetto scivola sulla mensola come prima. Ogni ruota sta in un supporto ricavato dentro il cassetto, lontano dalle sedi dei divisori, e gira su un perno Ø3,42 × 8,7 mm (stesso accoppiamento tarato dei perni Sakura: sede quadrata da 3,4, foro della ruota 3,8). Il perno si infila dall’esterno della sponda fino a filo; a cassetto montato resta bloccato dalla guida, a 0,5 mm. La ruota sporge 2 mm sotto il fondo: la mensola della guida si abbassa di conseguenza e si allarga verso l’interno, così il cassetto resta alla stessa quota e il modulo non cresce. Pezzi: `R01_Perno_ruota` e `R02_Ruota_cassetto`, da stampare 4 per cassetto (12 per tre livelli). Nella guida le ruote compaiono tutte e quattro grazie al campo `instances` dello spec. Non ancora provate in stampa.
 
 ## Scanalature modulari
 

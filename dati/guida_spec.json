@@ -24,7 +24,7 @@
         "label": "sedi per lato"
       },
       {
-        "value": "14 STL",
+        "value": "11 STL",
         "label": "pezzi del modulo"
       }
     ]
@@ -54,9 +54,9 @@
   },
   "parts": [
     {
-      "id": "P01",
+      "id": "C01",
       "label": "Cassetto con presa incassata",
-      "file": "stl/P01_Cassetto_L1.stl",
+      "file": "stl/C01_Cassetto_L1.stl",
       "mode": "mesh",
       "max_triangles": 4000,
       "quantity": 3,
@@ -78,9 +78,9 @@
       ]
     },
     {
-      "id": "P02",
+      "id": "D01",
       "label": "Divisorio longitudinale",
-      "file": "stl/P02_Divisorio_longitudinale.stl",
+      "file": "stl/D01_Divisorio_longitudinale.stl",
       "mode": "mesh",
       "max_triangles": 2400,
       "quantity": 3,
@@ -102,57 +102,9 @@
       ]
     },
     {
-      "id": "P03",
-      "label": "Longherone D alto",
-      "file": "stl/P03_Longherone_D_alta.stl",
-      "mode": "mesh",
-      "max_triangles": 2400,
-      "quantity": 3,
-      "group": "Telaio",
-      "print": "struttura",
-      "assembled_bounds": [
-        [
-          109,
-          119
-        ],
-        [
-          -106,
-          106
-        ],
-        [
-          91,
-          99
-        ]
-      ]
-    },
-    {
-      "id": "P04",
-      "label": "Longherone S alto",
-      "file": "stl/P04_Longherone_S_alta.stl",
-      "mode": "mesh",
-      "max_triangles": 2400,
-      "quantity": 3,
-      "group": "Telaio",
-      "print": "struttura",
-      "assembled_bounds": [
-        [
-          -119,
-          -109
-        ],
-        [
-          -106,
-          106
-        ],
-        [
-          91,
-          99
-        ]
-      ]
-    },
-    {
-      "id": "P05",
+      "id": "G01",
       "label": "Longherone D con guida e fermo",
-      "file": "stl/P05_Longherone_guida_D.stl",
+      "file": "stl/G01_Longherone_guida_D.stl",
       "mode": "mesh",
       "max_triangles": 2400,
       "quantity": 3,
@@ -174,9 +126,9 @@
       ]
     },
     {
-      "id": "P06",
+      "id": "G02",
       "label": "Longherone S con guida e fermo",
-      "file": "stl/P06_Longherone_guida_S.stl",
+      "file": "stl/G02_Longherone_guida_S.stl",
       "mode": "mesh",
       "max_triangles": 2400,
       "quantity": 3,
@@ -198,105 +150,9 @@
       ]
     },
     {
-      "id": "P07",
-      "label": "Montante DF",
-      "file": "stl/P07_Montante_DF_L1.stl",
-      "mode": "mesh",
-      "max_triangles": 2400,
-      "quantity": 3,
-      "group": "Telaio",
-      "print": "struttura",
-      "assembled_bounds": [
-        [
-          103,
-          125
-        ],
-        [
-          -120,
-          -98
-        ],
-        [
-          0,
-          112
-        ]
-      ]
-    },
-    {
-      "id": "P08",
-      "label": "Montante DR",
-      "file": "stl/P08_Montante_DR_L1.stl",
-      "mode": "mesh",
-      "max_triangles": 2400,
-      "quantity": 3,
-      "group": "Telaio",
-      "print": "struttura",
-      "assembled_bounds": [
-        [
-          103,
-          125
-        ],
-        [
-          98,
-          120
-        ],
-        [
-          0,
-          112
-        ]
-      ]
-    },
-    {
-      "id": "P09",
-      "label": "Montante SF",
-      "file": "stl/P09_Montante_SF_L1.stl",
-      "mode": "mesh",
-      "max_triangles": 2400,
-      "quantity": 3,
-      "group": "Telaio",
-      "print": "struttura",
-      "assembled_bounds": [
-        [
-          -125,
-          -103
-        ],
-        [
-          -120,
-          -98
-        ],
-        [
-          0,
-          112
-        ]
-      ]
-    },
-    {
-      "id": "P10",
-      "label": "Montante SR",
-      "file": "stl/P10_Montante_SR_L1.stl",
-      "mode": "mesh",
-      "max_triangles": 2400,
-      "quantity": 3,
-      "group": "Telaio",
-      "print": "struttura",
-      "assembled_bounds": [
-        [
-          -125,
-          -103
-        ],
-        [
-          98,
-          120
-        ],
-        [
-          0,
-          112
-        ]
-      ]
-    },
-    {
-      "id": "P11",
+      "id": "R01",
       "label": "Perno della ruota",
-      "file": "stl/P11_Perno_ruota.stl",
+      "file": "stl/R01_Perno_ruota.stl",
       "mode": "mesh",
       "max_triangles": 200,
       "quantity": 12,
@@ -340,9 +196,9 @@
       ]
     },
     {
-      "id": "P12",
+      "id": "R02",
       "label": "Ruota del cassetto",
-      "file": "stl/P12_Ruota_cassetto.stl",
+      "file": "stl/R02_Ruota_cassetto.stl",
       "mode": "mesh",
       "max_triangles": 400,
       "quantity": 12,
@@ -386,12 +242,132 @@
       ]
     },
     {
-      "id": "P13",
-      "label": "Traversa posteriore alta",
-      "file": "stl/P13_Traversa_posteriore_alta.stl",
+      "id": "T01",
+      "label": "Longherone alto",
+      "file": "stl/T01_Longherone_alta.stl",
+      "mode": "mesh",
+      "max_triangles": 2400,
+      "quantity": 6,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          109,
+          119
+        ],
+        [
+          -106,
+          106
+        ],
+        [
+          91,
+          99
+        ]
+      ],
+      "instances": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          -228,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "id": "T02",
+      "label": "Montante anteriore",
+      "file": "stl/T02_Montante_anteriore_L1.stl",
+      "mode": "mesh",
+      "max_triangles": 2400,
+      "quantity": 6,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          103,
+          125
+        ],
+        [
+          -120,
+          -98
+        ],
+        [
+          0,
+          112
+        ]
+      ],
+      "instances": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          -228,
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "id": "T03",
+      "label": "Montante DR",
+      "file": "stl/T03_Montante_DR_L1.stl",
       "mode": "mesh",
       "max_triangles": 2400,
       "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          103,
+          125
+        ],
+        [
+          98,
+          120
+        ],
+        [
+          0,
+          112
+        ]
+      ]
+    },
+    {
+      "id": "T04",
+      "label": "Montante SR",
+      "file": "stl/T04_Montante_SR_L1.stl",
+      "mode": "mesh",
+      "max_triangles": 2400,
+      "quantity": 3,
+      "group": "Telaio",
+      "print": "struttura",
+      "assembled_bounds": [
+        [
+          -125,
+          -103
+        ],
+        [
+          98,
+          120
+        ],
+        [
+          0,
+          112
+        ]
+      ]
+    },
+    {
+      "id": "T05",
+      "label": "Traversa posteriore",
+      "file": "stl/T05_Traversa_posteriore.stl",
+      "mode": "mesh",
+      "max_triangles": 2400,
+      "quantity": 6,
       "group": "Telaio",
       "print": "struttura",
       "assembled_bounds": [
@@ -407,29 +383,17 @@
           80,
           88
         ]
-      ]
-    },
-    {
-      "id": "P14",
-      "label": "Traversa posteriore bassa",
-      "file": "stl/P14_Traversa_posteriore_bassa.stl",
-      "mode": "mesh",
-      "max_triangles": 2400,
-      "quantity": 3,
-      "group": "Telaio",
-      "print": "struttura",
-      "assembled_bounds": [
+      ],
+      "instances": [
         [
-          -111,
-          111
+          0,
+          0,
+          0
         ],
         [
-          104,
-          114
-        ],
-        [
-          18,
-          26
+          0,
+          0,
+          -62
         ]
       ]
     }
@@ -446,27 +410,25 @@
       "short": "4 montanti · 2 fianchi con guida · 1 traversa",
       "text": "I due fianchi bassi sono un pezzo unico: longherone, guida a L e fermo posteriore. Porta ogni traverso 1,5 mm più in alto della sede, infila i tenoni fino in fondo, poi abbassalo: il dente a L scende nella tasca e il traverso resta agganciato. Sopra il tenone resta una luce di 1,5 mm.",
       "parts": [
-        "P07",
-        "P08",
-        "P09",
-        "P10",
-        "P05",
-        "P06",
-        "P14"
+        "T02",
+        "T03",
+        "T04",
+        "G01",
+        "G02",
+        "T05"
       ],
       "built": [
-        "P07",
-        "P08",
-        "P09",
-        "P10",
-        "P05",
-        "P06",
-        "P14"
+        "T02",
+        "T03",
+        "T04",
+        "G01",
+        "G02",
+        "T05"
       ],
       "moving": [
-        "P05",
-        "P06",
-        "P14"
+        "G01",
+        "G02",
+        "T05"
       ],
       "dir": [
         0,
@@ -480,26 +442,21 @@
       "short": "3 traverse alte",
       "text": "Inserisci i tre traversi alti allo stesso modo: dentro sollevati, poi giù di 1,5 mm. Le sedi alte sono sfalsate rispetto a quelle basse. I tenoni verticali dei montanti restano liberi per il modulo successivo.",
       "parts": [
-        "P03",
-        "P04",
-        "P13"
+        "T01",
+        "T05"
       ],
       "built": [
-        "P07",
-        "P08",
-        "P09",
-        "P10",
-        "P05",
-        "P06",
-        "P14",
-        "P03",
-        "P04",
-        "P13"
+        "T02",
+        "T03",
+        "T04",
+        "G01",
+        "G02",
+        "T05",
+        "T01"
       ],
       "moving": [
-        "P03",
-        "P04",
-        "P13"
+        "T01",
+        "T05"
       ],
       "dir": [
         0,
@@ -513,29 +470,26 @@
       "short": "mezza C aperta verso l’interno",
       "text": "Prima monta le 4 ruote: infila ogni ruota nella sua sede sotto il cassetto e spingi il perno Ø3,42 dall’esterno della sponda fino a filo; il perno resta bloccato dalla guida quando il cassetto è dentro. Fai scorrere il cassetto dal fronte con le ruote sulle mensole delle guide fino al fermo. La presa a mezza C è parte della parete, sporge circa 15 mm e lascia un vuoto aperto verso l’interno per le dita. Controlla scorrimento e accessibilità.",
       "parts": [
-        "P01",
-        "P11",
-        "P12"
+        "C01",
+        "R01",
+        "R02"
       ],
       "built": [
-        "P07",
-        "P08",
-        "P09",
-        "P10",
-        "P05",
-        "P06",
-        "P14",
-        "P03",
-        "P04",
-        "P13",
-        "P01",
-        "P11",
-        "P12"
+        "T02",
+        "T03",
+        "T04",
+        "G01",
+        "G02",
+        "T05",
+        "T01",
+        "C01",
+        "R01",
+        "R02"
       ],
       "moving": [
-        "P01",
-        "P11",
-        "P12"
+        "C01",
+        "R01",
+        "R02"
       ],
       "dir": [
         0,
@@ -549,26 +503,23 @@
       "short": "9 posizioni per lato",
       "text": "Inserisci il divisorio nelle sedi contrapposte del cassetto. Gli intagli superiori accolgono traversi opzionali.",
       "parts": [
-        "P02"
+        "D01"
       ],
       "built": [
-        "P07",
-        "P08",
-        "P09",
-        "P10",
-        "P05",
-        "P06",
-        "P14",
-        "P03",
-        "P04",
-        "P13",
-        "P01",
-        "P02",
-        "P11",
-        "P12"
+        "T02",
+        "T03",
+        "T04",
+        "G01",
+        "G02",
+        "T05",
+        "T01",
+        "C01",
+        "D01",
+        "R01",
+        "R02"
       ],
       "moving": [
-        "P02"
+        "D01"
       ],
       "dir": [
         0,
@@ -582,42 +533,36 @@
       "short": "tre moduli identici",
       "text": "Stampa tre copie del modulo. Le sedi alla base dei montanti ricevono i tenoni verticali del livello inferiore. Verifica giochi e portata con provini prima di caricare la torre.",
       "parts": [
-        "P01",
-        "P02",
-        "P03",
-        "P04",
-        "P05",
-        "P06",
-        "P07",
-        "P08",
-        "P09",
-        "P10",
-        "P11",
-        "P12",
-        "P13",
-        "P14"
+        "C01",
+        "D01",
+        "T01",
+        "G01",
+        "G02",
+        "T02",
+        "T03",
+        "T04",
+        "R01",
+        "R02",
+        "T05"
       ],
       "built": [
-        "P07",
-        "P08",
-        "P09",
-        "P10",
-        "P05",
-        "P06",
-        "P14",
-        "P03",
-        "P04",
-        "P13",
-        "P01",
-        "P02",
-        "P11",
-        "P12"
+        "T02",
+        "T03",
+        "T04",
+        "G01",
+        "G02",
+        "T05",
+        "T01",
+        "C01",
+        "D01",
+        "R01",
+        "R02"
       ]
     }
   ],
   "map": {
     "eyebrow": "02 / Mappa",
-    "h2": "Quattordici STL per un modulo.",
+    "h2": "Undici STL per un modulo.",
     "cards": [
       {
         "title": "Pezzi e posizioni",
@@ -625,22 +570,19 @@
         "top_label": "Telaio · guide · cassetto",
         "bottom_label": "Fronte aperto",
         "ids": [
-          "P01",
-          "P02",
-          "P03",
-          "P04",
-          "P05",
-          "P06",
-          "P07",
-          "P08",
-          "P09",
-          "P10",
-          "P11",
-          "P12",
-          "P13",
-          "P14"
+          "C01",
+          "D01",
+          "T01",
+          "G01",
+          "G02",
+          "T02",
+          "T03",
+          "T04",
+          "R01",
+          "R02",
+          "T05"
         ],
-        "note_html": "Per tre livelli stampa tre copie di ogni STL; i pezzi speculari restano file separati per rendere chiara la posa."
+        "note_html": "Sigle per gruppo: C cassetto, D divisori, G guide, R ruote, T telaio. Per tre livelli stampa tre copie di ogni STL; i pezzi uguali (longherone alto, montante anteriore, traversa posteriore) hanno un solo file da stampare due volte per livello, i pezzi speculari restano file separati."
       }
     ],
     "joints_title": "Tenoni e sedi del telaio",

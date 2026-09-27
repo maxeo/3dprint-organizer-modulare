@@ -9,7 +9,7 @@ function load(key){try{const v=JSON.parse(localStorage.getItem(key)||'null');ret
 function save(key,c){try{c?localStorage.setItem(key,JSON.stringify(c)):localStorage.removeItem(key);return true}catch(_){return false}}
 const isStandard=c=>O.dividerKey(c)===O.dividerKey(STANDARD)&&Object.keys(STANDARD).every(k=>k==='preset'||k.startsWith('divider')||(k==='wheels'?O.wheelCount(c)===STANDARD.wheels:c[k]===STANDARD[k]));
 const fmt=v=>v.toLocaleString('it-IT',{maximumFractionDigits:2});
-const nameOf=p=>p.file.replace(/^.*\/P\d+_/,'').replace(/\.stl$/,'');
+const nameOf=p=>p.file.replace(/^.*\/[A-Z]\d+_/,'').replace(/\.stl$/,'');
 const hexRgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
 
 // Vertici condivisi e box, nel formato mesh della guida.
@@ -29,7 +29,7 @@ function layout(data){const parts=data.parts.concat(O.ghosts);
   data.assembly={box,center,size};data.spread={};
   for(const p of parts){const v=[0,1,2].map(i=>(p.box[i]+p.box[i+3])/2-center[i]),L=Math.hypot(...v);data.spread[p.id]=L>1e-6?v.map(x=>Math.round(x/L*dist*100)/100):[0,0,0]}}
 // "Mostra più livelli": le copie dei livelli superiori sono pezzi fantasma solo per la vista
-// (id P07·L2): fuori da lista e quantità, un clic seleziona il pezzo principale.
+// (id T03·L2): fuori da lista e quantità, un clic seleziona il pezzo principale.
 function stack(data,c){const n=c.levels,pitch=c.tray_height_mm+c.clearance_above_mm;
   for(let l=1;l<n;l++)for(const p of data.parts){if(p.kind!=='mesh')continue;const dz=l*pitch;
     const g={kind:'mesh',ghost:true,main:p.id,id:`${p.id}·L${l+1}`,label:p.label,group:p.group,color:p.color,css_color:p.css_color,quantity:0,

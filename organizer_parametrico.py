@@ -510,6 +510,35 @@ def cut_tray_grooves(tray, c, cx, cy, z, tw, td, col):
 # finisce contro un altro. Intagli a mezzo legno da un lato solo:
 # longitudinali da sopra, trasversali da sotto. Vecchie modalita': open = 0+0, lane = 1+0, grid = 1+3.
 DIVIDER_TEE = 4.0  # sporgenza a tutta altezza oltre il pezzo attraversato, nei giunti a T
+# Pezzi gemelli: stessa forma per semplice traslazione (i longheroni guida no: il fermo posteriore li rende speculari).
+TWINS = (("Longherone_D_alta", "Longherone_S_alta", "Longherone_alta"),
+         ("Montante_DF_L1", "Montante_SF_L1", "Montante_anteriore_L1"),
+         ("Traversa_posteriore_alta", "Traversa_posteriore_bassa", "Traversa_posteriore"))
+
+
+def same_shape(a, b, depsgraph, tol=1e-5):
+    """Vertici uguali a meno di una traslazione (coordinate in metri, arrotondate a 10 micron)."""
+    def key(ob):
+        ev = ob.evaluated_get(depsgraph)
+        me = ev.to_mesh()
+        try:
+            pts = [ob.matrix_world @ v.co for v in me.vertices]
+            lo = [min(p[i] for p in pts) for i in range(3)]
+            return sorted(tuple(round((p[i] - lo[i]) / tol) for i in range(3)) for p in pts), len(me.polygons)
+        finally:
+            ev.to_mesh_clear()
+    return key(a) == key(b)
+
+
+def part_letter(name):
+    """Lettera della sigla: stessa regola dei gruppi della guida e di geometria.js."""
+    for prefix, letter in (("Cassetto", "C"), ("Divisorio", "D"), ("Longherone_guida", "G"),
+                           ("Ruota", "R"), ("Perno", "R")):
+        if name.startswith(prefix):
+            return letter
+    return "T"
+
+
 LEGACY_DIVIDERS = {"open": (0, 0), "lane": (1, 0), "grid": (1, 3)}
 
 
@@ -730,10 +759,28 @@ def export_first_level_stls(output_dir, copies=3):
         raise RuntimeError("Livello_01 non trovato")
     out = pathlib.Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
-    depsgraph = bpy.context.evaluated_depsgraph_get()
     records = []
+    depsgraph = bpy.context.evaluated_depsgraph_get()
     parts = [o for o in sorted(level.all_objects, key=lambda o: o.name) if o.type == "MESH" and not o.get("copia")]
-    for index, obj in enumerate(parts, 1):
+    # gemelli: stessa forma in due posizioni -> un solo STL con il nome comune e quantita' doppia
+    names, twin_of = {o.name: o.name for o in parts}, {}
+    for a, b, common in TWINS:
+        oa, ob = level.all_objects.get(a), level.all_objects.get(b)
+        if oa in parts and ob in parts and same_shape(oa, ob, depsgraph):
+            parts.remove(ob)
+            names[a] = common
+            twin_of[a] = 2
+        elif oa in parts and ob in parts:
+            print(f"ATTENZIONE: {a} e {b} non sono piu' uguali, restano due STL")
+    # sigla con la lettera del gruppo (C cassetto, D divisori, G guide, R ruote, T telaio), numerata dentro il gruppo
+    ids, seen = {}, {}
+    for obj in parts:
+        letter = part_letter(names[obj.name])
+        seen[letter] = seen.get(letter, 0) + 1
+        ids[obj.name] = f"{letter}{seen[letter]:02d}"
+    parts.sort(key=lambda o: ids[o.name])
+    for obj in parts:
+        part_id = ids[obj.name]
         ev = obj.evaluated_get(depsgraph)
         mesh = ev.to_mesh()
         try:
@@ -749,8 +796,8 @@ def export_first_level_stls(output_dir, copies=3):
             world = [obj.matrix_world @ v.co for v in mesh.vertices]
             mins = [min(v[i] for v in world) for i in range(3)]
             maxs = [max(v[i] for v in world) for i in range(3)]
-            slug = re.sub(r"[^A-Za-z0-9_]+", "_", obj.name)
-            filename = f"P{index:02d}_{slug}.stl"
+            slug = re.sub(r"[^A-Za-z0-9_]+", "_", names[obj.name])
+            filename = f"{part_id}_{slug}.stl"
             triangles = []
             for tri in mesh.loop_triangles:
                 points = [tuple((world[j][axis] - mins[axis]) * 1000
@@ -767,11 +814,11 @@ def export_first_level_stls(output_dir, copies=3):
                 for normal, a, b, c in triangles:
                     file.write(struct.pack("<12fH", *(normal + a + b + c), 0))
             records.append(dict(
-                id=f"P{index:02d}", name=obj.name, file=f"stl/{filename}",
+                id=part_id, name=names[obj.name], file=f"stl/{filename}",
                 assembled_bounds=[[round(mins[i] * 1000, 4), round(maxs[i] * 1000, 4)]
                                   for i in range(3)],
                 dimensions_mm=[round((maxs[i] - mins[i]) * 1000, 4) for i in range(3)],
-                triangles=len(triangles), copies=copies * obj.get("quantita", 1),
+                triangles=len(triangles), copies=copies * obj.get("quantita", 1) * twin_of.get(obj.name, 1),
             ))
         finally:
             ev.to_mesh_clear()

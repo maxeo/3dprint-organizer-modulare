@@ -150,7 +150,7 @@ function autoApply(delay){clearTimeout(autoTimer);if(!$('cfg_auto').checked)retu
 // l'STL del pezzo viene generato al clic.
 let generatedParts=null;
 function downloadPart(e){const a=e.target.closest&&e.target.closest('a[download]');if(!a||!O.applied)return;
-  const m=(a.getAttribute('href')||'').match(/^stl\/(P\d+)_(.+)\.stl$/);if(!m)return;
+  const m=(a.getAttribute('href')||'').match(/^stl\/([A-Z]\d+)_(.+)\.stl$/);if(!m)return;
   generatedParts=generatedParts||O.partsForConfig(O.applied);const p=generatedParts.find(q=>q.id===m[1]&&q.name===m[2]);if(!p)return;
   e.preventDefault();const stl=O.stlBytes(p.name,O.stlTris(p)),url=URL.createObjectURL(new Blob([stl.bytes],{type:'model/stl'})),link=document.createElement('a');
   link.href=url;link.download=`${p.id}_${p.name}.stl`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
