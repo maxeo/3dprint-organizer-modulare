@@ -19,11 +19,11 @@ Esempio:
 ```python
 CONFIG = make_config("mezzo", width_mm=170, depth_mm=220,
                      tray_height_mm=55, clearance_above_mm=60,
-                     levels=2, divider_mode="grid",
+                     levels=2, dividers_long=2, dividers_cross=3,
                      drawer_open_fraction=0.25)
 ```
 
-Preset disponibili: `standard`, `mezzo`, `basso`, `alto`, `compatto` (200 × 200). Tutti i preset hanno ogni pezzo entro un piatto 230 × 230 mm (`PRINT_BED_MM`); l’export Blender avvisa se un pezzo lo supera. Nella guida il pulsante **Stampante** (in alto a destra, accanto al tema) imposta l’area di stampa reale X × Y × Z, con alcune stampanti comuni: il pulsante diventa rosso e il pannello Configura elenca i pezzi che non entrano in nessuna orientazione a 90°. Divisori: `open`, `lane`, `grid`. Si possono modificare anche `wall_mm`, `side_clearance_mm`, `vertical_clearance_mm`, `post_mm`, `joint_mm` e `joint_clearance_mm`. Il secondo cassetto è quello mostrato estratto; se c'è un solo livello, si estrae il primo.
+Preset disponibili: `standard`, `mezzo`, `basso`, `alto`, `compatto` (200 × 200). Tutti i preset hanno ogni pezzo entro un piatto 230 × 230 mm (`PRINT_BED_MM`); l’export Blender avvisa se un pezzo lo supera. Nella guida il pulsante **Stampante** (in alto a destra, accanto al tema) imposta l’area di stampa reale X × Y × Z, con alcune stampanti comuni: il pulsante diventa rosso e il pannello Configura elenca i pezzi che non entrano in nessuna orientazione a 90°. Divisori: `dividers_long` e `dividers_cross` (modalità `modulare`) oppure `divider_mode="disegno"` con `divider_layout` (vedi *Divisori*); i vecchi `open`, `lane`, `grid` valgono 0+0, 1+0, 1+3. Si possono modificare anche `wall_mm`, `side_clearance_mm`, `vertical_clearance_mm`, `post_mm`, `joint_mm` e `joint_clearance_mm`. Il secondo cassetto è quello mostrato estratto; se c'è un solo livello, si estrae il primo.
 
 Il modello distingue telaio, guide, cassetti e divisori in collezioni. La struttura standard misura 318 mm di altezza, più 6 mm di tenoni superiori. Le sedi sono 0,35 mm più larghe del tenone per lato.
 
@@ -47,7 +47,14 @@ Lo standard ha 4 ruote Ø10 × 3 mm sotto il cassetto, due per lato (`wheels=4`)
 
 ## Scanalature modulari
 
-Il cassetto ha sedi verticali su tutti e quattro i lati, a passo 20 mm. Nello standard ci sono 9 posizioni per ciascun lato, larghe 3,0 mm e profonde 1,0 mm: resta una parete esterna di 2,2 mm. Il divisorio longitudinale è spesso 2,4 mm, entra nelle sedi alle estremità e ha intagli superiori ripetuti per traversi opzionali. In modalità `grid` tre traversi si montano a −60, 0 e +60 mm con intaglio inferiore a mezzo spessore. Verificare il gioco reale con un provino prima della stampa completa.
+Il cassetto ha sedi verticali su tutti e quattro i lati, a passo 20 mm. Nello standard ci sono 9 posizioni per ciascun lato, larghe 3,0 mm e profonde 1,0 mm: resta una parete esterna di 2,2 mm. I divisori sono spessi 2,4 mm ed entrano nelle sedi delle pareti. Verificare il gioco reale con un provino prima della stampa completa.
+
+## Divisori
+
+Gli incastri sono a mezzo legno e da un lato solo: i longitudinali (fronte-fondo) hanno gli intagli in alto, i trasversali (sponda-sponda) in basso.
+
+- **Modulari** (standard: 1 longitudinale, 0 trasversali): nel pannello si sceglie quanti longitudinali e quanti trasversali. Si distribuiscono sulle sedi il più possibile in modo uniforme, non per forza al centro. Ogni pezzo ha un intaglio a **ogni** sede, quindi si può spostare in qualsiasi sede e incrociare con qualsiasi altro. I pezzi uguali sono un solo STL con la quantità.
+- **Disegnati**: con *Disegna i divisori…* si apre un modale con la pianta delle sedi. Si colorano i tratti fra due sedi vicine con un clic, trascinando lungo una sede o con un clic sul numero della sede (riga intera); *Disegna* parte dai numeri dei modulari. I pezzi escono su misura: gli intagli ci sono solo dove due pezzi si incrociano, e un pezzo che arriva contro un altro si ferma sulla sua faccia. Negli angoli il nodo va al longitudinale. Lo schema è salvato come `divider_layout` (`v`: `"i:k"` = sede longitudinale i fra i nodi k e k+1; `h`: lo stesso per le trasversali), lo stesso formato che legge `organizer_parametrico.py`.
 
 ## Guida interattiva e generazione senza Blender
 
