@@ -4,7 +4,7 @@
 Realizzare una base autoreggente e impilabile, trasformabile via script per tipologie e misure diverse. L’HTML B18 in `originale/` è solo una traccia (anche di stile: gli slider del configuratore riprendono i suoi `.control`). L’utente vuole Blender via MCP, STL, guida HTML offline simile agli altri progetti in `D:\3D Print`, configurazione JavaScript senza Blender dentro la guida, scanalature multiple, **aggiornare questo handoff e fare commit a ogni step** (commit prodotto + commit handoff).
 
 ## Stato corrente
-- `Organizer_Modulare_Parametrico.blend` e `organizer_parametrico.py`: torre standard 320 × 340 mm, tre livelli da 106 mm, 12 oggetti per livello. Script incorporato nel `.blend` (text block `organizer_parametrico.py`), preset e quote libere.
+- `Organizer_Modulare_Parametrico.blend` e `organizer_parametrico.py`: torre standard **250 × 240 mm** (richiesta utente: ogni pezzo entro un piatto 230 × 230 mm, `PRINT_BED_MM`/`PRINT_BED`), tre livelli da 106 mm, 12 oggetti per livello. Cassetto 205 × 224,9 mm con la presa, traverse 222, longheroni 212, montanti 22 × 22 × 112 in piedi; 9 + 9 sedi. Preset: standard, mezzo 140 × 240, basso, alto, compatto 200 × 200 (profondo eliminato: non può stare nel piatto). Il pannello mostra in rosso i pezzi oltre il piatto (`oversize()`), l’export Blender stampa ATTENZIONE. Script incorporato nel `.blend` (text block `organizer_parametrico.py`), preset e quote libere.
 - **Incastro a L** (richiesta utente, `77e309e`): tenone 6 × 5 × 8 mm con dente 3 × 1,5 mm verso il basso in punta. Sede 6,7 × 8,5 mm alta 5,7 + 1,5 mm con tasca sul fondo: il traverso entra sollevato e scende di 1,5 mm; montato, sopra il tenone resta una luce di 1,5 mm (voluta, "senza esagerare"). `HOOK_MM`, `HOOK_LEN_MM`, `mortise_l()`. Longherone basso a 12,5 mm (`LOW_SIDE_RAIL_Z`, era 11) perché la tasca non si avvicini alla sede di impilamento: parete residua 0,55 mm come prima. Il cutter della sede va fuso prima della differenza, altrimenti restano gusci interni (`dd0bf93`).
 - **Pezzo laterale unico** (richiesta utente, `dd0bf93`): ex Fermo + Guida + Longherone basso = `Longherone_guida_S/D` (`side_guide_rail()`), uniti da nervatura continua; niente linguette. 21 × 312 × 14,5 mm.
 - `stl/`: 12 STL del modulo standard + `manifest.json` (`447c054`), tre copie per la torre.
@@ -23,13 +23,12 @@ Realizzare una base autoreggente e impilabile, trasformabile via script per tipo
 ## Limiti
 - Giochi, gancio a L, portata, scorrimento e presa non provati fisicamente. Profilo di stampa del pezzo laterale (faccia esterna sul piatto, tenoni 2 mm sollevati con supporto) è una proposta.
 - Nella configurazione personalizzata i testi della guida con quote (passaggi, note) restano quelli dello standard; lo dice la nota del modello.
-- Cassetto 275 × 325 mm e longheroni 312 mm superano un piatto 250 × 250.
 - Il pannello non è stato provato a mano nel browser dell’utente (solo headless).
 
 ## Prossimi passi
 1. In sospeso: l’utente ha chiesto se mettere **ruote opzionali in basso** per far scorrere meglio il cassetto. Non implementato: proporre una soluzione (es. rotelle stampate su perno nel fondo del cassetto che corrono sulla mensola della guida) e chiedere conferma.
 2. Stampare provini del giunto a L, del pezzo laterale, della presa e del divisorio; calibrare giochi e portata.
-3. Dopo ogni modifica di geometria: rigenerare in Blender (`exec` del text block), esportare STL (`export_first_level_stls`), aggiornare `dati/js/geometria.js` con le stesse quote, `build_guide.py dati/guida_spec.json`, `node dati/integra_configuratore.js`, README; commit prodotto e commit handoff.
+3. Dopo ogni modifica di geometria: rigenerare in Blender (`exec` del text block), esportare STL (`export_first_level_stls`), **copiare le `assembled_bounds` del manifest in `dati/guida_spec.json`** (altrimenti la vista monta i pezzi nelle posizioni vecchie), aggiornare `dati/js/geometria.js` con le stesse quote, `build_guide.py dati/guida_spec.json`, `node dati/integra_configuratore.js`, README; commit prodotto e commit handoff.
 
 ## Modalità di lavoro
 - Python di sistema assente: usare `C:/Program Files/Blender Foundation/Blender */*/python/bin/python.exe` per `build_guide.py` e `shoot.py` (skill `guida-stampa-3d`); Node 22 per gli script JS.
