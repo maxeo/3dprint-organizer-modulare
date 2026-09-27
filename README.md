@@ -41,6 +41,10 @@ Per rigenerare gli STL dopo una modifica a `CONFIG`, decommenta la riga `export_
 
 La presa del cassetto è una mezza C integrata nella parete frontale: il guscio esterno curva fino a circa 15 mm di sporgenza e sfuma ai lati. La tasca è aperta fino al bordo superiore e attraversa la parete verso l'interno del cassetto, così si possono infilare le dita. Il guscio resta unito sotto e ai lati. Anche questa zona richiede un provino per verificarne comodità e resistenza.
 
+## Ruote opzionali
+
+Con `wheels=True` (nel pannello Configura: *Ruote sotto il cassetto*) il cassetto corre su 4 ruote Ø10 × 3 mm, due per lato, invece di scivolare sulla mensola. Ogni ruota sta in un supporto ricavato dentro il cassetto, lontano dalle sedi dei divisori, e gira su un perno Ø3,42 × 8,7 mm (stesso accoppiamento tarato dei perni Sakura: sede quadrata da 3,4, foro della ruota 3,8). Il perno si infila dall’esterno della sponda fino a filo; a cassetto montato resta bloccato dalla guida, a 0,5 mm. La ruota sporge 2 mm sotto il fondo: la mensola della guida si abbassa di conseguenza e si allarga verso l’interno, così il cassetto resta alla stessa quota e il modulo non cresce. Pezzi in più: `Ruota_cassetto` e `Perno_ruota`, 4 per cassetto; cambiano anche cassetto e `Longherone_guida`. Gli STL standard in `stl/` sono senza ruote. Non ancora provate in stampa.
+
 ## Scanalature modulari
 
 Il cassetto ha sedi verticali su tutti e quattro i lati, a passo 20 mm. Nello standard ci sono 9 posizioni per ciascun lato, larghe 3,0 mm e profonde 1,0 mm: resta una parete esterna di 2,2 mm. Il divisorio longitudinale è spesso 2,4 mm, entra nelle sedi alle estremità e ha intagli superiori ripetuti per traversi opzionali. In modalità `grid` tre traversi si montano a −60, 0 e +60 mm con intaglio inferiore a mezzo spessore. Verificare il gioco reale con un provino prima della stampa completa.

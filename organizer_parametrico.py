@@ -35,6 +35,7 @@ def make_config(preset="standard", **overrides):
         groove_pitch_mm=20.0, groove_width_mm=3.0, groove_depth_mm=1.0,
         side_clearance_mm=0.5, vertical_clearance_mm=0.4,
         post_mm=22.0, joint_mm=8.0, joint_clearance_mm=0.35,
+        wheels=False,
     ))
     cfg.update(overrides)
     return cfg
@@ -54,12 +55,94 @@ def validate(c):
         raise ValueError("levels deve essere fra 1 e 8")
     if not 0 <= c["drawer_open_fraction"] <= 0.7:
         raise ValueError("drawer_open_fraction deve essere fra 0 e 0.7")
+    if c["wheels"]:
+        wheel_y(c)
     if c["divider_mode"] not in ("open", "lane", "grid"):
         raise ValueError("divider_mode: open, lane oppure grid")
     if c["groove_pitch_mm"] < 10 or c["groove_width_mm"] <= c["divider_thickness_mm"]:
         raise ValueError("Passo o larghezza delle scanalature non validi")
     if not 0.4 <= c["groove_depth_mm"] <= wall - 1.2:
         raise ValueError("La scanalatura lascerebbe una parete esterna troppo sottile")
+
+
+# Ruote opzionali: due per lato sotto il cassetto, su perno 3,42 (accoppiamento tarato con i perni
+# Sakura in sedi da 3,4). La ruota sporge WHEEL["drop"] sotto il fondo e corre sulla mensola della
+# guida, abbassata di conseguenza: il cassetto resta alla stessa quota. Sedi del perno quadrate.
+WHEEL = dict(d=10.0, w=3.0, bore=3.8, pin=3.42, hole=3.4, drop=2.0, slot=3.6, gap=0.8, seg=48, pin_seg=24)
+WHEEL_BOSS = WHEEL["d"] + 2 * WHEEL["gap"] + 4
+
+
+def wheel_y(c):
+    """Distanza delle ruote dal centro del cassetto lungo Y, fuori dalle sedi dei divisori."""
+    td = c["depth_mm"] - c["post_mm"] - 8
+    ys = slot_positions(td - 2 * c["wall_mm"], c["groove_pitch_mm"])
+    gw = c["groove_width_mm"]
+    end, last, need = td / 2 - c["wall_mm"], ys[-1] + gw / 2, WHEEL_BOSS + 1
+    if end - last >= need:
+        return (end + last) / 2
+    if len(ys) > 1 and c["groove_pitch_mm"] - gw >= need:
+        return ys[-1] - c["groove_pitch_mm"] / 2
+    raise ValueError("Con le ruote servono almeno 17,6 mm liberi fra l'ultima sede e il fondo del cassetto")
+
+
+def tube_x(name, ro, ri, length, seg, center, col, mat):
+    """Cilindro (cavo se ri > 0) con asse X: stessi vertici del tube() di geometria.js."""
+    cx, cy, cz = center
+    rings = [(ro, 0), (ro, length)] + ([(ri, length), (ri, 0)] if ri > 0 else [])
+    verts = [(cx - length / 2 + w, cy + r * math.cos(2 * math.pi * i / seg), cz + r * math.sin(2 * math.pi * i / seg))
+             for r, w in rings for i in range(seg)]
+    n = len(rings)
+    faces = [(k * seg + i, k * seg + (i + 1) % seg, ((k + 1) % n) * seg + (i + 1) % seg, ((k + 1) % n) * seg + i)
+             for k in range(n if ri > 0 else 1) for i in range(seg)]
+    if ri <= 0:
+        faces += [tuple(reversed(range(seg))), tuple(range(seg, 2 * seg))]
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata([tuple(v * MM for v in p) for p in verts], [], faces)
+    mesh.update()
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(mesh)
+    bm.free()
+    ob = bpy.data.objects.new(name, mesh)
+    col.objects.link(ob)
+    mesh.materials.append(mat)
+    return ob
+
+
+def add_wheels(tray, c, cy, tw, col, mat):
+    """Supporti e sedi nel cassetto, 4 ruote e 4 perni. Solo il primo di ogni tipo va esportato."""
+    wall, yo = c["wall_mm"], wheel_y(c)
+    wall_in = tw / 2 - wall
+    wz = 11 - WHEEL["drop"] + WHEEL["d"] / 2
+    pin_len = WHEEL["slot"] + 2.2 + wall - 0.3
+    bosses, slots, holes = [], [], []
+    for sg in (-1, 1):
+        for n, yw in enumerate((cy - yo, cy + yo)):
+            def span(a, b):
+                return min(sg * a, sg * b), max(sg * a, sg * b)
+            b0, b1 = span(wall_in - WHEEL["slot"] - 2.2, wall_in + 0.5)
+            s0, s1 = span(wall_in - WHEEL["slot"], wall_in)
+            h0, h1 = span(wall_in - WHEEL["slot"] - 2.3, tw / 2 + 0.1)
+            top = wz + WHEEL["d"] / 2 + WHEEL["gap"] + 2
+            bosses.append(((b0 + b1) / 2, yw, (11.5 + top) / 2, b1 - b0, WHEEL_BOSS, top - 11.5))
+            slot_top = wz + WHEEL["d"] / 2 + WHEEL["gap"]
+            slots.append(((s0 + s1) / 2, yw, (10.9 + slot_top) / 2, s1 - s0, WHEEL["d"] + 2 * WHEEL["gap"], slot_top - 10.9))
+            holes.append(((h0 + h1) / 2, yw, wz, h1 - h0, WHEEL["hole"], WHEEL["hole"]))
+            k = len(bosses)
+            wheel = tube_x("Ruota_cassetto" if k == 1 else f"Ruota_cassetto_{k}", WHEEL["d"] / 2, WHEEL["bore"] / 2, WHEEL["w"],
+                           WHEEL["seg"], (sg * (wall_in - WHEEL["slot"] / 2), yw, wz), col, mat)
+            pin = tube_x("Perno_ruota" if k == 1 else f"Perno_ruota_{k}", WHEEL["pin"] / 2, 0, pin_len,
+                         WHEEL["pin_seg"], (sg * (tw / 2 - 0.3 - pin_len / 2), yw, wz), col, mat)
+            for ob in (wheel, pin):
+                ob["quantita"] = 4
+                if k > 1:
+                    ob["copia"] = True
+    apply_boolean(tray, multi_box_cutter("_supporti_ruote", bosses, col), "UNION")
+    # sedi e fori si incrociano: si tolgono in due passate, ognuna con box separati
+    apply_boolean(tray, multi_box_cutter("_sedi_ruote", slots, col), "DIFFERENCE")
+    apply_boolean(tray, multi_box_cutter("_fori_perni", holes, col), "DIFFERENCE")
+    tray["ruote"] = f"4 ruote Ø{WHEEL['d']:g} x {WHEEL['w']:g} su perno Ø{WHEEL['pin']} x {pin_len:.1f}"
 
 
 def material(name, rgba, metallic=0.0, roughness=0.45):
@@ -221,12 +304,21 @@ def side_guide_rail(name, sign, xpos, inner_face, stop_y, z, c, col, mat):
     d = c["depth_mm"]
     rail_len = d - 2 * c["post_mm"]
     body = rail(name, "Y", (xpos, 0), d, z + LOW_SIDE_RAIL_Z, c, col, mat)
-    guide = box("_guida", (sign * (inner_face + 2), 0, z + 15),
-                (4, rail_len, 12), col, mat)
+    if c["wheels"]:
+        # con le ruote la mensola scende di WHEEL["drop"] e si allarga verso l'interno fino sotto le ruote
+        tw = c["width_mm"] - 2 * c["post_mm"] - 2 * c["side_clearance_mm"]
+        ledge_in, ledge_top = tw / 2 - c["wall_mm"] - 4.5, 11 - WHEEL["drop"]
+        guide = box("_guida", (sign * (inner_face + 2), 0, z + (ledge_top - 3 + 21) / 2),
+                    (4, rail_len, 21 - ledge_top + 3), col, mat)
+        ledge = box("_appoggio_guida", (sign * (ledge_in + inner_face + 3) / 2, 0, z + ledge_top - 1.5),
+                    (inner_face + 3 - ledge_in, rail_len, 3), col, mat)
+    else:
+        guide = box("_guida", (sign * (inner_face + 2), 0, z + 15),
+                    (4, rail_len, 12), col, mat)
+        ledge = box("_appoggio_guida",
+                    (sign * (inner_face - 1), 0, z + 11 - c["vertical_clearance_mm"] - 1.5),
+                    (8, rail_len, 3), col, mat)
     apply_boolean(body, guide, "UNION")
-    ledge = box("_appoggio_guida",
-                (sign * (inner_face - 1), 0, z + 11 - c["vertical_clearance_mm"] - 1.5),
-                (8, rail_len, 3), col, mat)
     apply_boolean(body, ledge, "UNION")
     rail_inner = abs(xpos) - 5
     web_x0, web_x1 = inner_face + 3, rail_inner + 1
@@ -430,6 +522,7 @@ def build_organizer(c):
     guide_mat = material("02 | Grafite guide", (0.15, 0.17, 0.19, 1), 0.25)
     tray_mat = material("03 | Salvia cassetto", (0.30, 0.52, 0.43, 1))
     detail_mat = material("04 | Terracotta dettagli", (0.65, 0.32, 0.23, 1))
+    wheel_mat = material("05 | Ocra ruote", (0.85, 0.64, 0.25, 1))
 
     w, d = c["width_mm"], c["depth_mm"]
     post_size, wall = c["post_mm"], c["wall_mm"]
@@ -474,6 +567,9 @@ def build_organizer(c):
         tray = tray_mesh(f"Cassetto_L{level + 1}", 0, tray_y, z + 11,
                          tw, td, h, wall, tray_col, tray_mat)
         cut_tray_grooves(tray, c, 0, tray_y, z + 11, tw, td, tray_col)
+        # ruote prima della presa: le booleane dopo la presa ne sporcano la mesh (bordi aperti)
+        if c["wheels"]:
+            add_wheels(tray, c, tray_y, tw, collection("05_Ruote", group), wheel_mat)
         add_tray_handle(tray, tray_y, z + 11, h, td, tw, wall, tray_col, tray_mat)
         tray["estrazione_frazione"] = c["drawer_open_fraction"] if level == opening_level else 0.0
         make_dividers(c, 0, tray_y, z + 11, tw, td, divider_col, detail_mat)
@@ -516,9 +612,8 @@ def export_first_level_stls(output_dir, copies=3):
     out.mkdir(parents=True, exist_ok=True)
     depsgraph = bpy.context.evaluated_depsgraph_get()
     records = []
-    for index, obj in enumerate(sorted(level.all_objects, key=lambda o: o.name), 1):
-        if obj.type != "MESH":
-            continue
+    parts = [o for o in sorted(level.all_objects, key=lambda o: o.name) if o.type == "MESH" and not o.get("copia")]
+    for index, obj in enumerate(parts, 1):
         ev = obj.evaluated_get(depsgraph)
         mesh = ev.to_mesh()
         try:
@@ -556,7 +651,7 @@ def export_first_level_stls(output_dir, copies=3):
                 assembled_bounds=[[round(mins[i] * 1000, 4), round(maxs[i] * 1000, 4)]
                                   for i in range(3)],
                 dimensions_mm=[round((maxs[i] - mins[i]) * 1000, 4) for i in range(3)],
-                triangles=len(triangles), copies=copies,
+                triangles=len(triangles), copies=copies * obj.get("quantita", 1),
             ))
         finally:
             ev.to_mesh_clear()

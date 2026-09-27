@@ -3,7 +3,7 @@
 (function(O){
 "use strict";
 const KEY_DRAFT='organizer-config',KEY_APPLIED='organizer-config-applicata',KEY_LEVELS='organizer-mostra-livelli';
-const STANDARD={preset:'standard',divider_mode:'lane',width_mm:250,depth_mm:240,tray_height_mm:48,clearance_above_mm:58,levels:3,groove_pitch_mm:20,groove_width_mm:3,groove_depth_mm:1,divider_thickness_mm:2.4,wall_mm:3.2,post_mm:22,side_clearance_mm:0.5,vertical_clearance_mm:0.4};
+const STANDARD={preset:'standard',divider_mode:'lane',width_mm:250,depth_mm:240,tray_height_mm:48,clearance_above_mm:58,levels:3,groove_pitch_mm:20,groove_width_mm:3,groove_depth_mm:1,divider_thickness_mm:2.4,wall_mm:3.2,post_mm:22,side_clearance_mm:0.5,vertical_clearance_mm:0.4,wheels:false};
 
 function load(key){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v&&typeof v==='object'?{...STANDARD,...v}:null}catch(_){return null}}
 function save(key,c){try{c?localStorage.setItem(key,JSON.stringify(c)):localStorage.removeItem(key);return true}catch(_){return false}}
@@ -18,7 +18,7 @@ function indexed(tris){const map=new Map(),vertices=[],triangles=[];const at=v=>
   const box=[0,1,2].map(i=>Math.min(...vertices.map(v=>v[i]))).concat([0,1,2].map(i=>Math.max(...vertices.map(v=>v[i]))));
   return {vertices,triangles,box}}
 
-function labelFor(name){const m=name.match(/^Divisorio_trasversale_(\d+)$/);return m?`Divisorio trasversale ${m[1]}`:name.replace(/_L1$/,'').replace(/_/g,' ')}
+function labelFor(name){if(name==='Ruota_cassetto')return 'Ruota del cassetto';if(name==='Perno_ruota')return 'Perno della ruota';const m=name.match(/^Divisorio_trasversale_(\d+)$/);return m?`Divisorio trasversale ${m[1]}`:name.replace(/_L1$/,'').replace(/_/g,' ')}
 
 // Ingombro e direzioni dell'esploso come in build_guide.py.
 function layout(data){const parts=data.parts.concat(O.ghosts);
@@ -48,15 +48,19 @@ function customize(data){
   let generated;try{O.validate(c);generated=O.partsForConfig(c)}catch(e){console.warn('Configurazione non valida, uso lo standard',e);return null}
   const groups=data.groups||{},byName={},oldName={};
   for(const p of data.parts){byName[nameOf(p)]=p;oldName[p.id]=nameOf(p)}
-  const parts=generated.map(g=>{const ref=byName[g.name],geo=indexed(O.previewMesh(g.adds,g.subs)),css=ref?ref.css_color:(groups[g.group]||{}).color||'#b97058';
-    return {kind:'mesh',...geo,id:g.id,label:ref?ref.label:labelFor(g.name),group:g.group,file:`stl/${g.id}_${g.name}.stl`,quantity:c.levels,color:ref?ref.color:hexRgb(css),css_color:css,print:ref?ref.print:'divisori',note_html:'',dims:[0,1,2].map(i=>Math.round((geo.box[i+3]-geo.box[i])*100)/100)}});
+  // ruote e perni: gruppo proprio, 4 per cassetto (nella vista compaiono tutti e quattro)
+  if(c.wheels&&!groups.Ruote){groups.Ruote={color:'#d9a441'};data.groups=groups}
+  const parts=generated.map(g=>{const ref=byName[g.name],geo=indexed(O.previewTris(g)),css=ref?ref.css_color:(groups[g.group]||{}).color||'#b97058';
+    return {kind:'mesh',...geo,id:g.id,label:ref?ref.label:labelFor(g.name),group:g.group,file:`stl/${g.id}_${g.name}.stl`,quantity:c.levels*(g.count||1),color:ref?ref.color:hexRgb(css),css_color:css,print:ref?ref.print:'divisori',note_html:'',dims:g.dims||[0,1,2].map(i=>Math.round((geo.box[i+3]-geo.box[i])*100)/100)}});
   const newId=Object.fromEntries(generated.map(g=>[g.name,g.id]));
-  const extra=generated.filter(g=>!byName[g.name]).map(g=>g.id);
-  const divider=newId.Divisorio_longitudinale;
-  const remap=ids=>{const out=(ids||[]).map(id=>newId[oldName[id]]).filter(Boolean);if(divider&&out.includes(divider))out.push(...extra);return out};
+  // pezzi nuovi: i divisori trasversali vanno con il divisorio, ruote e perni con il cassetto
+  const extra=generated.filter(g=>!byName[g.name]&&g.group!=='Ruote').map(g=>g.id),wheelIds=generated.filter(g=>g.group==='Ruote').map(g=>g.id);
+  const divider=newId.Divisorio_longitudinale,drawer=newId.Cassetto_L1;
+  const remap=ids=>{const out=(ids||[]).map(id=>newId[oldName[id]]).filter(Boolean);if(divider&&out.includes(divider))out.push(...extra);if(drawer&&out.includes(drawer))out.push(...wheelIds);return out};
   const all=parts.map(p=>p.id);
   data.steps=(data.steps||[]).map(s=>{const r={...s,parts:remap(s.parts),built:s.built&&remap(s.built)};if(s.moving)r.moving=remap(s.moving);
     if((s.parts||[]).length===data.parts.length)r.parts=all;return r}).filter((s,i)=>s.parts.length||!(data.steps[i].parts||[]).length);
+  if(c.wheels)for(const s of data.steps)if(s.moving&&s.moving.includes(drawer)&&s.parts.length<all.length)s.text=`Prima monta le 4 ruote: infila ogni ruota nella sua sede sotto il cassetto e spingi il perno Ø3,42 dall’esterno della sponda fino a filo; il perno resta bloccato dalla guida quando il cassetto è dentro. ${s.text||''}`;
   if(data.map)for(const card of data.map.cards||[])if(card.ids)card.ids=all.filter(id=>remap(card.ids).includes(id)||extra.includes(id));
   data.parts=parts;
   const pitch=c.tray_height_mm+c.clearance_above_mm,wall=c.wall_mm,tw=c.width_mm-2*c.post_mm-2*c.side_clearance_mm,td=c.depth_mm-c.post_mm-8;
@@ -65,7 +69,7 @@ function customize(data){
   set(0,`${fmt(c.width_mm)} × ${fmt(c.depth_mm)} mm`);set(1,`${fmt(pitch)} mm`);set(2,`${xs.length} + ${ys.length}`);set(3,`${parts.length} STL`);
   if(data.header)data.header.eyebrow='Configurazione personalizzata · anteprima generata nel browser';
   data.caption=`Anteprima della configurazione ${fmt(c.width_mm)} × ${fmt(c.depth_mm)} mm, ${c.levels} livelli: pezzi calcolati nel browser, gli stessi del pacchetto STL.`;
-  data.model_note_html=`<span class="badge">Configurazione personalizzata</span><p>Modulo ${fmt(c.width_mm)} × ${fmt(c.depth_mm)} × ${fmt(pitch)} mm, cassetto ${fmt(tw)} × ${fmt(td)} mm. Vista e lista pezzi usano la geometria generata nel browser; scarica gli STL da <b>Configura</b>. I testi con le quote si riferiscono ancora allo standard.</p>`;
+  data.model_note_html=`<span class="badge">Configurazione personalizzata</span><p>Modulo ${fmt(c.width_mm)} × ${fmt(c.depth_mm)} × ${fmt(pitch)} mm, cassetto ${fmt(tw)} × ${fmt(td)} mm${c.wheels?', 4 ruote Ø10 su perno Ø3,42: la mensola della guida è 2 mm più bassa e il cassetto resta alla stessa quota':''}. Vista e lista pezzi usano la geometria generata nel browser; scarica gli STL da <b>Configura</b>. I testi con le quote si riferiscono ancora allo standard.</p>`;
   O.applied=c;
   return c;
 }

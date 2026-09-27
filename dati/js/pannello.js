@@ -44,18 +44,18 @@ const CSS=`
 function control([k,label,min,max,step],wide){return `<div class="cfg-control${wide?' wide':''}"><label for="cfg_${k}_n"><span class="cfg-name">${label}</span><span class="cfg-val"><input id="cfg_${k}_n" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}"><em>${k==='levels'?'':'mm'}</em></span></label><input id="cfg_${k}" type="range" min="${min}" max="${max}" step="${step}" aria-label="${label}"></div>`}
 
 function markup(){
-  const sel=(id,label,opts)=>`<div class="cfg-control"><label for="${id}"><span class="cfg-name">${label}</span></label><select id="${id}">${opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></div>`;
+  const sel=(id,label,opts,wide)=>`<div class="cfg-control${wide?' wide':''}"><label for="${id}"><span class="cfg-name">${label}</span></label><select id="${id}">${opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></div>`;
   return `<div class="cfg-back" id="cfg_back"></div><aside class="cfg-panel" id="cfg_panel" role="dialog" aria-modal="true" aria-labelledby="cfg_title">
 <div class="cfg-head"><div><h2 id="cfg_title">Configura il modulo</h2><p>Quote in millimetri. <b>Applica</b> salva la configurazione e rigenera l’anteprima 3D con i pezzi calcolati qui.</p></div><button class="cfg-x" id="cfg_close" type="button" aria-label="Chiudi"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
-<div class="cfg-grid" style="margin-top:14px">${sel('cfg_preset','Tipologia iniziale',Object.entries(PRESET_NAMES))}${sel('cfg_divider_mode','Divisori',[['open','Nessuno'],['lane','Una corsia centrale'],['grid','Griglia con tre traversi']])}</div>
+<div class="cfg-grid" style="margin-top:14px">${sel('cfg_preset','Tipologia iniziale',Object.entries(PRESET_NAMES))}${sel('cfg_divider_mode','Divisori',[['open','Nessuno'],['lane','Una corsia centrale'],['grid','Griglia con tre traversi']])}${sel('cfg_wheels','Ruote sotto il cassetto',[['0','Nessuna: il cassetto scivola sulla mensola'],['1','4 ruote Ø10 su perno Ø3,42']],true)}</div>
 ${SECTIONS.map(([title,fields],si)=>`<div class="cfg-sec">${title}</div><div class="cfg-grid">${fields.map((f,i)=>control(f,fields.length%2&&i===fields.length-1)).join('')}</div>${si?'':'<label class="cfg-auto cfg-levels"><input type="checkbox" id="cfg_levels_show">Mostra più livelli nell’anteprima 3D</label>'}`).join('')}
 <div class="cfg-sec">Pianta</div><div class="cfg-plan" id="cfg_plan"></div>
 <div class="cfg-facts"><div><b id="cfg_f_pitch"></b><span>passo mm</span></div><div><b id="cfg_f_tray"></b><span>cassetto mm</span></div><div><b id="cfg_f_grooves"></b><span>sedi per lato</span></div><div><b id="cfg_f_total"></b><span>telaio mm</span></div></div>
 <div class="cfg-actions"><button id="cfg_apply" type="button">Applica all’anteprima</button><button id="cfg_zip" class="sec" type="button">Scarica ZIP STL</button><button id="cfg_std" class="sec" type="button">Predefinito</button><label class="cfg-auto"><input type="checkbox" id="cfg_auto">Applica automaticamente a ogni modifica</label><p class="cfg-status" id="cfg_status" role="status" aria-live="polite"></p></div>
 </aside><button class="cfg-fab" id="cfg_fab" type="button" aria-controls="cfg_panel"><i></i>Configura<small id="cfg_fab_info"></small></button>`}
 
-function readForm(){const c={preset:$('cfg_preset').value,divider_mode:$('cfg_divider_mode').value};for(const k of O.numeric)c[k]=Number($(`cfg_${k}_n`).value);return c}
-function writeForm(c){$('cfg_preset').value=PRESET_NAMES[c.preset]?c.preset:'custom';$('cfg_divider_mode').value=c.divider_mode;for(const k of O.numeric){$(`cfg_${k}_n`).value=c[k];$(`cfg_${k}`).value=c[k]}}
+function readForm(){const c={preset:$('cfg_preset').value,divider_mode:$('cfg_divider_mode').value,wheels:$('cfg_wheels').value==='1'};for(const k of O.numeric)c[k]=Number($(`cfg_${k}_n`).value);return c}
+function writeForm(c){$('cfg_preset').value=PRESET_NAMES[c.preset]?c.preset:'custom';$('cfg_divider_mode').value=c.divider_mode;$('cfg_wheels').value=c.wheels?'1':'0';for(const k of O.numeric){$(`cfg_${k}_n`).value=c[k];$(`cfg_${k}`).value=c[k]}}
 function matchingPreset(c){return Object.keys(O.PRESETS).find(p=>O.PRESETS[p].every((v,i)=>c[PRESET_KEYS[i]]===v))||'custom'}
 function status(text,cls=''){const s=$('cfg_status');s.textContent=text;s.className='cfg-status'+(cls?' '+cls:'')}
 
@@ -65,6 +65,7 @@ function planSvg(c){const w=c.width_mm,d=c.depth_mm,post=c.post_mm,tw=w-2*post-2
   const line=(a,b,c2,d2)=>`<line x1="${a}" y1="${b}" x2="${c2}" y2="${d2}" stroke="#274436" stroke-width="${c.groove_width_mm}"/>`,g=c.groove_depth_mm+4;
   for(const x of xs)svg+=line(x,y0+wall,x,y0+wall+g)+line(x,y0+td-wall,x,y0+td-wall-g);
   for(const y of ys)svg+=line(x0+wall,cy+y,x0+wall+g,cy+y)+line(x0+tw-wall,cy+y,x0+tw-wall-g,cy+y);
+  if(c.wheels){const yo=O.wheelY(c),wi=tw/2-wall;for(const s of [-1,1])for(const y of [cy-yo,cy+yo])svg+=`<rect x="${r(s>0?wi-3.3:-wi+0.3)}" y="${r(y-5)}" width="3" height="10" rx="1" fill="#d9a441" stroke="#8a6414" stroke-width="0.6"/>`}
   if(c.divider_mode!=='open'){svg+=`<rect x="${-thick/2}" y="${y0+wall}" width="${thick}" height="${td-2*wall}" fill="#b97058"/>`;if(c.divider_mode==='grid'){const t=(td-2*wall)/4;for(const y of new Set([-t,0,t].map(v=>ys.reduce((a,b)=>Math.abs(a-v)<Math.abs(b-v)?a:b))))svg+=`<rect x="${x0+wall}" y="${cy+y-thick/2}" width="${tw-2*wall}" height="${thick}" fill="#b97058"/>`}}
   for(const x of [-w/2,w/2-post])for(const y of [-d/2,d/2-post])svg+=`<rect x="${x}" y="${y}" width="${post}" height="${post}" fill="#d7cbb0" stroke="#958b77"/>`;
   // Il fronte (cassetto estraibile) è a y negativa: in pianta lo mostriamo in basso.
@@ -89,17 +90,17 @@ function render(){let c;try{c=O.validate(readForm())}catch(e){status(e.message,'
 async function downloadZip(){let c;try{c=O.validate(readForm())}catch(e){status(e.message,'err');return}
   const b=$('cfg_zip');b.disabled=true;status('Calcolo STL in corso…');await new Promise(r=>setTimeout(r,25));
   try{const parts=O.partsForConfig(c),entries=[],enc=new TextEncoder(),manifest={generator:'Organizer JS offline',unit:'mm',configuration:c,note:'Un modulo geometrico preliminare con tenoni a L, sedi, longheroni con guida integrata e presa cava integrata; verificare con provini.',parts:[]};
-    for(const p of parts){const stl=O.stlBytes(p.name,O.meshFromBoxes(p.adds,p.subs)),file=`stl/${p.id}_${p.name}.stl`;entries.push({name:file,data:stl.bytes});manifest.parts.push({id:p.id,name:p.name,group:p.group,file,copies:c.levels,assembled_bounds:stl.bounds,dimensions_mm:stl.dims,triangles:stl.triangles})}
-    const readme=['ORGANIZER MODULARE - STL PRELIMINARI','',`Un modulo, da ripetere ${c.levels} volte. Le quote sono in millimetri.`,`Ingombro telaio: ${c.width_mm} x ${c.depth_mm} x ${c.tray_height_mm+c.clearance_above_mm} mm per livello.`,`Scanalature: passo ${c.groove_pitch_mm} mm, larghezza ${c.groove_width_mm} mm, profondita ${c.groove_depth_mm} mm.`,'','Tenoni 6 x 5 x 8 mm con dente a L di 1,5 mm: inserire il traverso sollevato e poi abbassarlo. Gioco nominale 0,35 mm per lato; longherone basso, guida e fermo sono un pezzo unico; presa cava integrata. Verificare piano di stampa, giochi, portata e montaggio con provini.',''].join('\n');
+    for(const p of parts){const stl=O.stlBytes(p.name,O.stlTris(p)),file=`stl/${p.id}_${p.name}.stl`;entries.push({name:file,data:stl.bytes});manifest.parts.push({id:p.id,name:p.name,group:p.group,file,copies:c.levels*(p.count||1),assembled_bounds:stl.bounds,dimensions_mm:stl.dims,triangles:stl.triangles})}
+    const readme=['ORGANIZER MODULARE - STL PRELIMINARI','',`Un modulo, da ripetere ${c.levels} volte. Le quote sono in millimetri.`,`Ingombro telaio: ${c.width_mm} x ${c.depth_mm} x ${c.tray_height_mm+c.clearance_above_mm} mm per livello.`,`Scanalature: passo ${c.groove_pitch_mm} mm, larghezza ${c.groove_width_mm} mm, profondita ${c.groove_depth_mm} mm.`,'','Tenoni 6 x 5 x 8 mm con dente a L di 1,5 mm: inserire il traverso sollevato e poi abbassarlo. Gioco nominale 0,35 mm per lato; longherone basso, guida e fermo sono un pezzo unico; presa cava integrata. Verificare piano di stampa, giochi, portata e montaggio con provini.',...(c.wheels?['',`Ruote: stampare ${4*c.levels} ruote Ø10 x 3 mm (piatte) e ${4*c.levels} perni Ø3,42 x ${O.round(O.WHEEL.slot+2.2+c.wall_mm-0.3,2)} mm (in piedi, stesso profilo dei perni Sakura). Ogni ruota entra nella sua sede sotto il cassetto; il perno si spinge dall'esterno della sponda fino a filo e resta bloccato dalla guida. La mensola della guida e' 2 mm piu' bassa: usare i Longherone_guida di questo pacchetto.`]:[]),''].join('\n');
     entries.push({name:'manifest.json',data:enc.encode(JSON.stringify(manifest,null,2))},{name:'configurazione.json',data:enc.encode(JSON.stringify(c,null,2))},{name:'LEGGIMI.txt',data:enc.encode(readme)});
     const bytes=O.makeZip(entries),url=URL.createObjectURL(new Blob([bytes],{type:'application/zip'})),a=document.createElement('a');
-    a.href=url;a.download=`Organizer_${c.width_mm}x${c.depth_mm}_${c.divider_mode}_${c.levels}livelli.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+    a.href=url;a.download=`Organizer_${c.width_mm}x${c.depth_mm}_${c.divider_mode}${c.wheels?'_ruote':''}_${c.levels}livelli.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
     status(`ZIP creato: ${parts.length} STL per modulo, ${Math.round(bytes.length/1024)} KiB.`,'ok')}
   catch(e){status('Errore: '+e.message,'err');console.error(e)}finally{b.disabled=false}}
 
 // Dopo il ricaricamento si ritrovano pannello, scroll e inquadratura (variabili globali del visualizzatore).
 const KEY_RESTORE='organizer-ripristino',KEY_AUTO='organizer-auto-applica';
-const same=(a,b)=>!!a&&!!b&&O.numeric.every(k=>a[k]===b[k])&&a.divider_mode===b.divider_mode;
+const same=(a,b)=>!!a&&!!b&&O.numeric.every(k=>a[k]===b[k])&&a.divider_mode===b.divider_mode&&!!a.wheels===!!b.wheels;
 function saveView(){const v={open:document.documentElement.classList.contains('cfg-open'),panel:$('cfg_panel').scrollTop,page:scrollY};
   try{Object.assign(v,{yaw,pitch,zoom,panX,panY,explode,selected})}catch(_){}
   try{sessionStorage.setItem(KEY_RESTORE,JSON.stringify(v))}catch(_){}}
@@ -118,7 +119,7 @@ let generatedParts=null;
 function downloadPart(e){const a=e.target.closest&&e.target.closest('a[download]');if(!a||!O.applied)return;
   const m=(a.getAttribute('href')||'').match(/^stl\/(P\d+)_(.+)\.stl$/);if(!m)return;
   generatedParts=generatedParts||O.partsForConfig(O.applied);const p=generatedParts.find(q=>q.id===m[1]&&q.name===m[2]);if(!p)return;
-  e.preventDefault();const stl=O.stlBytes(p.name,O.meshFromBoxes(p.adds,p.subs)),url=URL.createObjectURL(new Blob([stl.bytes],{type:'model/stl'})),link=document.createElement('a');
+  e.preventDefault();const stl=O.stlBytes(p.name,O.stlTris(p)),url=URL.createObjectURL(new Blob([stl.bytes],{type:'model/stl'})),link=document.createElement('a');
   link.href=url;link.download=`${p.id}_${p.name}.stl`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
 
 function open(on,focus=true){document.documentElement.classList.toggle('cfg-open',on);if(on){render();if(focus)$('cfg_close').focus({preventScroll:true})}else $('cfg_fab').focus({preventScroll:true})}
@@ -133,6 +134,7 @@ function mount(){
     const sync=src=>{(src===n?r:n).value=src.value;if(PRESET_KEYS.includes(k))$('cfg_preset').value=matchingPreset(readForm());render()};
     n.addEventListener('input',()=>{sync(n);autoApply(900)});r.addEventListener('input',()=>sync(r));r.addEventListener('change',()=>autoApply(150))}
   $('cfg_divider_mode').addEventListener('change',()=>{render();autoApply(150)});
+  $('cfg_wheels').addEventListener('change',()=>{render();autoApply(150)});
   $('cfg_preset').addEventListener('change',()=>{const v=O.PRESETS[$('cfg_preset').value];if(v)PRESET_KEYS.forEach((k,i)=>{$(`cfg_${k}_n`).value=v[i];$(`cfg_${k}`).value=v[i]});render();autoApply(150)});
   $('cfg_apply').addEventListener('click',()=>{try{apply(O.validate(readForm()))}catch(e){status(e.message,'err')}});
   $('cfg_zip').addEventListener('click',downloadZip);
