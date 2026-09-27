@@ -9,7 +9,7 @@
   "header": {
     "eyebrow": "Organizer modulare · incastri e presa integrata",
     "h1": "Un modulo, tre livelli configurabili.",
-    "intro_html": "<b>I traversi si agganciano ai montanti con un tenone a L:</b> entrano sollevati e scendono di 1,5 mm. Longherone basso, guida e fermo sono un pezzo unico per lato. Il cassetto ha una presa cava a mezza C, continua con il frontale e aperta verso l’interno. Questa guida mostra un modulo standard da ripetere tre volte. Per misure diverse apri il <a href=\"configuratore.html\">configuratore JavaScript</a>.",
+    "intro_html": "<b>I traversi si agganciano ai montanti con un tenone a L:</b> entrano sollevati e scendono di 1,5 mm. Longherone basso, guida e fermo sono un pezzo unico per lato. Il cassetto ha una presa cava a mezza C, continua con il frontale e aperta verso l’interno. Questa guida mostra un modulo standard da ripetere tre volte. Per misure diverse usa il pulsante <a href=\"#configura\">Configura</a>: l’anteprima si rigenera con le tue misure.",
     "facts": [
       {
         "value": "320 × 340 mm",
@@ -640,7 +640,7 @@
       },
       {
         "title": "Piano di stampa",
-        "html": "<p>Il cassetto misura 275 × 324,8 mm circa con la presa curva; il longherone più lungo misura 312 mm. Se il piano è più piccolo, ridimensiona dal <a href=\"configuratore.html\">configuratore</a> o progetta una divisione dei pezzi.</p>"
+        "html": "<p>Il cassetto misura 275 × 324,8 mm circa con la presa curva; il longherone più lungo misura 312 mm. Se il piano è più piccolo, ridimensiona dal <a href=\"#configura\">configuratore</a> o progetta una divisione dei pezzi.</p>"
       },
       {
         "title": "Presa cava a mezza C",
@@ -650,11 +650,11 @@
   },
   "files": {
     "h2": "File del progetto.",
-    "intro_html": "La guida funziona offline. Il configuratore genera pacchetti STL nuovi nel browser; Blender conserva il modello modificabile.",
+    "intro_html": "La guida funziona offline. Il pulsante Configura genera STL e anteprima nel browser; Blender conserva il modello modificabile.",
     "links": [
       {
-        "label": "Configuratore senza Blender",
-        "href": "configuratore.html"
+        "label": "Configura (STL senza Blender)",
+        "href": "#configura"
       },
       {
         "label": "File Blender",
