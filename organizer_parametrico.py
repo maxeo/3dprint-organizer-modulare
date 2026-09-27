@@ -147,7 +147,10 @@ def mortise_l(body, name, axis, cx, cy, inward, center_z, col):
     else:
         boxes = [(cx, cy, main_z, depth, width, height + HOOK_MM),
                  (cx + pocket_off, cy, pocket_z, pocket_len, width, HOOK_MM + 0.1)]
-    apply_boolean(body, multi_box_cutter(name, boxes, col), "DIFFERENCE")
+    # I due box si sovrappongono: fonderli prima evita gusci interni spuri.
+    main, pocket = [multi_box_cutter(name, [b], col) for b in boxes]
+    apply_boolean(main, pocket, "UNION")
+    apply_boolean(body, main, "DIFFERENCE")
 
 
 def post(name, x, y, z, c, col, mat):
@@ -181,8 +184,8 @@ def post(name, x, y, z, c, col, mat):
     return body
 
 
-def rail(name, axis, center, span, z, c, col, mat, guide_side=0):
-    """Trave con due tenoni 6 x 5 x 8 mm e sedi eventuali per la guida."""
+def rail(name, axis, center, span, z, c, col, mat):
+    """Trave con due tenoni 6 x 5 x 8 mm con gancio a L."""
     x, y = center
     post_size = c["post_mm"]
     full_span = span - 2 * post_size
@@ -204,33 +207,35 @@ def rail(name, axis, center, span, z, c, col, mat, guide_side=0):
         else:
             hc, hs = (x + sign * tip, y, hz), (HOOK_LEN_MM, 6, HOOK_MM + 0.2)
         apply_boolean(body, box("_gancio_tenone", hc, hs, col, mat), "UNION")
-    if guide_side:
-        # Tre mortase cieche sul lato interno del longherone basso.
-        gx = guide_side * (abs(x) - 2.85)
-        offset = min(80, full_span / 2 - 15)
-        for gy in (-offset, 0, offset):
-            cut = box("_sede_guida", (gx, gy, z + 0.6),
-                      (4.5, 10.7, 3.7), col, mat)
-            apply_boolean(body, cut, "DIFFERENCE")
     body["giunto"] = "tenoni 6x5x8 mm con gancio a L 1,5 mm, gioco 0.35 mm per lato"
     return body
 
 
-def fixed_guide(name, sign, inner_face, rail_len, z, vertical, col, mat):
-    """Guida a L monopezzo, con tre linguette verso il longherone."""
-    gx = sign * (inner_face + 2)
-    guide = box(name, (gx, 0, z + 15), (4, rail_len, 12), col, mat)
-    lx = sign * (inner_face - 1)
-    ledge = box("_appoggio_guida", (lx, 0, z + 11 - vertical - 1.5),
+def side_guide_rail(name, sign, xpos, inner_face, stop_y, z, c, col, mat):
+    """Longherone basso, guida a L e fermo posteriore in un unico pezzo.
+
+    Una nervatura continua unisce guida e longherone per tutta la luce.
+    """
+    d = c["depth_mm"]
+    rail_len = d - 2 * c["post_mm"]
+    body = rail(name, "Y", (xpos, 0), d, z + LOW_SIDE_RAIL_Z, c, col, mat)
+    guide = box("_guida", (sign * (inner_face + 2), 0, z + 15),
+                (4, rail_len, 12), col, mat)
+    apply_boolean(body, guide, "UNION")
+    ledge = box("_appoggio_guida",
+                (sign * (inner_face - 1), 0, z + 11 - c["vertical_clearance_mm"] - 1.5),
                 (8, rail_len, 3), col, mat)
-    apply_boolean(guide, ledge, "UNION")
-    offset = min(80, rail_len / 2 - 15)
-    for gy in (-offset, 0, offset):
-        tab = box("_linguetta_guida", (sign * (inner_face + 6.9), gy, z + LOW_SIDE_RAIL_Z + 0.6),
-                  (6.2, 10, 3), col, mat)
-        apply_boolean(guide, tab, "UNION")
-    guide["fissaggio"] = "3 linguette nelle sedi del longherone basso"
-    return guide
+    apply_boolean(body, ledge, "UNION")
+    rail_inner = abs(xpos) - 5
+    web_x0, web_x1 = inner_face + 3, rail_inner + 1
+    web = box("_nervatura_guida", (sign * (web_x0 + web_x1) / 2, 0, z + 12.5),
+              (web_x1 - web_x0, rail_len, 5), col, mat)
+    apply_boolean(body, web, "UNION")
+    stop = box("_fermo", (sign * (inner_face + 1), stop_y, z + 9),
+               (3, 7, 5), col, mat)
+    apply_boolean(body, stop, "UNION")
+    body["parte"] = "longherone basso + guida + fermo"
+    return body
 
 
 def add_tray_handle(tray, cy, z, h, td, tw, wall, col, mat):
@@ -434,7 +439,6 @@ def build_organizer(c):
     td = d - post_size - 8
     drawer_shift = -td * c["drawer_open_fraction"]
     opening_level = 1 if c["levels"] > 1 else 0
-    rail_len = d - 2 * post_size
 
     for level in range(c["levels"]):
         z = level * pitch
@@ -454,12 +458,10 @@ def build_organizer(c):
         for sx, xpos in (("S", -w / 2 + post_size / 2),
                          ("D", w / 2 - post_size / 2)):
             sign = -1 if sx == "S" else 1
-            for tag, rail_z in (("bassa", z + LOW_SIDE_RAIL_Z), ("alta", z + pitch - 11)):
-                rail(f"Longherone_{sx}_{tag}", "Y", (xpos, 0), d, rail_z,
-                     c, frame, frame_mat, guide_side=sign if tag == "bassa" else 0)
-            inner_face = tw / 2 + side
-            fixed_guide(f"Guida_{sx}", sign, inner_face, rail_len,
-                        z, vertical, guides, guide_mat)
+            rail(f"Longherone_{sx}_alta", "Y", (xpos, 0), d, z + pitch - 11,
+                 c, frame, frame_mat)
+            side_guide_rail(f"Longherone_guida_{sx}", sign, xpos, tw / 2 + side,
+                            d / 2 - post_size - 8, z, c, guides, guide_mat)
 
         for tag, rail_z in (("bassa", z + 22), ("alta", z + pitch - 22)):
             rail(f"Traversa_posteriore_{tag}", "X",
@@ -473,11 +475,6 @@ def build_organizer(c):
         add_tray_handle(tray, tray_y, z + 11, h, td, tw, wall, tray_col, tray_mat)
         tray["estrazione_frazione"] = c["drawer_open_fraction"] if level == opening_level else 0.0
         make_dividers(c, 0, tray_y, z + 11, tw, td, divider_col, detail_mat)
-        # I fermi sono separati e possono essere ricalibrati o rimossi.
-        for sx in (-1, 1):
-            box(f"Fermo_{'S' if sx < 0 else 'D'}", 
-                (sx * (tw / 2 + side + 1), d / 2 - post_size - 8, z + 9),
-                (3, 7, 5), guides, detail_mat, 0.35)
 
     scene = bpy.context.scene
     scene.unit_settings.system = "METRIC"
@@ -562,7 +559,7 @@ def export_first_level_stls(output_dir, copies=3):
         finally:
             ev.to_mesh_clear()
     manifest = dict(
-        note="Tenoni laterali e posteriori con sedi cieche; guide a linguette e maniglia integrata. Verificare giochi e carico con provini.",
+        note="Tenoni con gancio a L e sedi cieche; longherone basso, guida e fermo in un unico pezzo; maniglia integrata. Verificare giochi e carico con provini.",
         unit="mm", source_blend=bpy.data.filepath, parts=records,
     )
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
