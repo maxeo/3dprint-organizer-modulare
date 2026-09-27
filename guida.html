@@ -86,6 +86,7 @@ section{scroll-margin-top:20px;margin-top:34px}.section-head{display:flex;align-
 
 
 
+
 <!--configuratore:inizio--><script>
 /* dati/js/geometria.js */
 // Geometria parametrica del modulo: stesse quote dello script Blender (organizer_parametrico.py).
@@ -98,7 +99,10 @@ function validate(c){if(!Object.values(c).every(v=>typeof v!=='number'||Number.i
 function slots(span,pitch,margin=12){const n=Math.floor((span/2-margin)/pitch);return Array.from({length:2*n+1},(_,i)=>(i-n)*pitch)}
 function box(x0,x1,y0,y1,z0,z1){return [x0,x1,y0,y1,z0,z1]}
 function centered(cx,cy,cz,sx,sy,sz){return box(cx-sx/2,cx+sx/2,cy-sy/2,cy+sy/2,cz-sz/2,cz+sz/2)}
-function gripBoxes(front,top,wall,tw,h){const adds=[],subs=[],countX=12,countZ=6,half=Math.min(30,(tw-2*wall)/2-8),maxDrop=Math.min(22,h-5);const depth=(t,s)=>0.5+t*(14*(1-s*s)+1.5*Math.sin(Math.PI*s));for(let i=0;i<countX;i++){let x0=-half+2*half*i/countX,x1=-half+2*half*(i+1)/countX,x=(x0+x1)/2,t=Math.pow(Math.max(0,1-(x/half)**2),1.2),drop=5+(maxDrop-5)*t;for(let j=0;j<countZ;j++){let s0=j/countZ,s1=(j+1)/countZ,sm=(s0+s1)/2;adds.push(box(x0-0.16,x1+0.16,front-depth(t,sm),front+1.5,top+0.2-(drop+0.2)*s1,top+0.2-(drop+0.2)*s0))}}const innerHalf=half-4;for(let i=0;i<countX;i++){let x0=-innerHalf+2*innerHalf*i/countX,x1=-innerHalf+2*innerHalf*(i+1)/countX,x=(x0+x1)/2,t=Math.pow(Math.max(0,1-(x/innerHalf)**2),1.2),drop=5+(maxDrop-5)*t;for(let j=0;j<countZ;j++){let v0=j/countZ,v1=(j+1)/countZ,vm=(v0+v1)/2,z=top+2-(drop-0.2)*vm,s=Math.max(0,Math.min(1,(top-z)/drop)),inner=Math.max(0.3,depth(t,s)-1.8);subs.push(box(x0,x1,front-inner,front+wall+2,top+2-(drop-0.2)*v1,top+2-(drop-0.2)*v0))}}return {adds,subs}}
+// Presa a mezza C a fette. Profondità quantizzate a GRIP_STEP: la griglia voxel è unica per tutto il pezzo
+// e profondità tutte diverse la farebbero esplodere.
+const GRIP_X=32,GRIP_Z=16,GRIP_STEP=0.5;
+function gripBoxes(front,top,wall,tw,h){const adds=[],subs=[],countX=GRIP_X,countZ=GRIP_Z,half=Math.min(30,(tw-2*wall)/2-8),maxDrop=Math.min(22,h-5);const q=v=>Math.round(v/GRIP_STEP)*GRIP_STEP,depth=(t,s)=>q(0.5+t*(14*(1-s*s)+1.5*Math.sin(Math.PI*s)));for(let i=0;i<countX;i++){let x0=-half+2*half*i/countX,x1=-half+2*half*(i+1)/countX,x=(x0+x1)/2,t=Math.pow(Math.max(0,1-(x/half)**2),1.2),drop=5+(maxDrop-5)*t;for(let j=0;j<countZ;j++){let s0=j/countZ,s1=(j+1)/countZ,sm=(s0+s1)/2;adds.push(box(x0,x1,front-depth(t,sm),front+1.5,q(top+0.2-(drop+0.2)*s1),q(top+0.2-(drop+0.2)*s0)))}}const innerHalf=half-4;for(let i=0;i<countX;i++){let x0=-innerHalf+2*innerHalf*i/countX,x1=-innerHalf+2*innerHalf*(i+1)/countX,x=(x0+x1)/2,t=Math.pow(Math.max(0,1-(x/innerHalf)**2),1.2),drop=5+(maxDrop-5)*t;for(let j=0;j<countZ;j++){let v0=j/countZ,v1=(j+1)/countZ,vm=(v0+v1)/2,z=top+2-(drop-0.2)*vm,s=Math.max(0,Math.min(1,(top-z)/drop)),inner=Math.max(0.5,depth(t,s)-2);subs.push(box(x0,x1,q(front-inner),front+wall+2,q(top+2-(drop-0.2)*v1),q(top+2-(drop-0.2)*v0)))}}return {adds,subs}}
 function part(name,group,adds,subs=[]){return {name,group,adds,subs}}
 // Gancio a L: dente HOOK x HOOK_LEN in punta al tenone; sede alta 5,7+HOOK con tasca sul fondo.
 const HOOK=1.5,HOOK_LEN=3,LOW_RAIL=12.5;
@@ -186,7 +190,7 @@ Object.assign(O,{stlBytes,makeZip});
 // sostituisce i pezzi standard della guida con quelli generati nel browser.
 (function(O){
 "use strict";
-const KEY_DRAFT='organizer-config',KEY_APPLIED='organizer-config-applicata';
+const KEY_DRAFT='organizer-config',KEY_APPLIED='organizer-config-applicata',KEY_LEVELS='organizer-mostra-livelli';
 const STANDARD={preset:'standard',divider_mode:'lane',width_mm:320,depth_mm:340,tray_height_mm:48,clearance_above_mm:58,levels:3,groove_pitch_mm:20,groove_width_mm:3,groove_depth_mm:1,divider_thickness_mm:2.4,wall_mm:3.2,post_mm:22,side_clearance_mm:0.5,vertical_clearance_mm:0.4};
 
 function load(key){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v&&typeof v==='object'?{...STANDARD,...v}:null}catch(_){return null}}
@@ -204,10 +208,33 @@ function indexed(tris){const map=new Map(),vertices=[],triangles=[];const at=v=>
 
 function labelFor(name){const m=name.match(/^Divisorio_trasversale_(\d+)$/);return m?`Divisorio trasversale ${m[1]}`:name.replace(/_L1$/,'').replace(/_/g,' ')}
 
+// Ingombro e direzioni dell'esploso come in build_guide.py.
+function layout(data){const parts=data.parts;
+  const box=[0,1,2].map(i=>Math.min(...parts.map(p=>p.box[i]))).concat([3,4,5].map(i=>Math.max(...parts.map(p=>p.box[i]))));
+  const center=[0,1,2].map(i=>(box[i]+box[i+3])/2),size=Math.max(box[3]-box[0],box[4]-box[1],box[5]-box[2]),dist=Math.round(size*.8)/10;
+  data.assembly={box,center,size};data.spread={};
+  for(const p of parts){const v=[0,1,2].map(i=>(p.box[i]+p.box[i+3])/2-center[i]),L=Math.hypot(...v);data.spread[p.id]=L>1e-6?v.map(x=>Math.round(x/L*dist*100)/100):[0,0,0]}}
+
+// "Mostra più livelli": ogni pezzo diventa la pila delle sue copie, così lista e quantità restano invariate
+// e selezionando un pezzo si evidenziano tutti i livelli.
+function stack(data,c){const n=c.levels,pitch=c.tray_height_mm+c.clearance_above_mm;
+  for(const p of data.parts){if(p.kind!=='mesh')continue;const nv=p.vertices.length,v=[],t=[];
+    for(let l=0;l<n;l++){for(const q of p.vertices)v.push([q[0],q[1],Math.round((q[2]+l*pitch)*100)/100]);for(const tr of p.triangles)t.push(tr.map(i=>i+l*nv))}
+    p.vertices=v;p.triangles=t;p.box=[...p.box.slice(0,5),p.box[5]+(n-1)*pitch]}
+  data.caption=(data.caption||'')+` Vista con ${n} livelli impilati.`}
+
 function patch(data){
-  const c=load(KEY_APPLIED);O.applied=null;O.standardData=data;
-  if(!c||isStandard(c))return data;
-  let generated;try{O.validate(c);generated=O.partsForConfig(c)}catch(e){console.warn('Configurazione non valida, uso lo standard',e);return data}
+  O.standardData=data;O.applied=null;
+  const c=customize(data),shown=c||STANDARD;
+  try{O.showLevels=localStorage.getItem(KEY_LEVELS)==='1'}catch(_){O.showLevels=false}
+  if(O.showLevels&&shown.levels>1)stack(data,shown);
+  if(c||(O.showLevels&&shown.levels>1))layout(data);
+  return data}
+
+function customize(data){
+  const c=load(KEY_APPLIED);
+  if(!c||isStandard(c))return null;
+  let generated;try{O.validate(c);generated=O.partsForConfig(c)}catch(e){console.warn('Configurazione non valida, uso lo standard',e);return null}
   const groups=data.groups||{},byName={},oldName={};
   for(const p of data.parts){byName[nameOf(p)]=p;oldName[p.id]=nameOf(p)}
   const parts=generated.map(g=>{const ref=byName[g.name],geo=indexed(O.previewMesh(g.adds,g.subs)),css=ref?ref.css_color:(groups[g.group]||{}).color||'#b97058';
@@ -221,11 +248,6 @@ function patch(data){
     if((s.parts||[]).length===data.parts.length)r.parts=all;return r}).filter((s,i)=>s.parts.length||!(data.steps[i].parts||[]).length);
   if(data.map)for(const card of data.map.cards||[])if(card.ids)card.ids=all.filter(id=>remap(card.ids).includes(id)||extra.includes(id));
   data.parts=parts;
-  // Ingombro e direzioni dell'esploso come in build_guide.py.
-  const box=[0,1,2].map(i=>Math.min(...parts.map(p=>p.box[i]))).concat([3,4,5].map(i=>Math.max(...parts.map(p=>p.box[i]))));
-  const center=[0,1,2].map(i=>(box[i]+box[i+3])/2),size=Math.max(box[3]-box[0],box[4]-box[1],box[5]-box[2]),dist=Math.round(size*.8)/10;
-  data.assembly={box,center,size};data.spread={};
-  for(const p of parts){const v=[0,1,2].map(i=>(p.box[i]+p.box[i+3])/2-center[i]),L=Math.hypot(...v);data.spread[p.id]=L>1e-6?v.map(x=>Math.round(x/L*dist*100)/100):[0,0,0]}
   const pitch=c.tray_height_mm+c.clearance_above_mm,wall=c.wall_mm,tw=c.width_mm-2*c.post_mm-2*c.side_clearance_mm,td=c.depth_mm-c.post_mm-8;
   const xs=O.slots(tw-2*wall,c.groove_pitch_mm),ys=O.slots(td-2*wall,c.groove_pitch_mm);
   const facts=(data.header||{}).facts||[],set=(i,v)=>{if(facts[i])facts[i].value=v};
@@ -234,10 +256,10 @@ function patch(data){
   data.caption=`Anteprima della configurazione ${fmt(c.width_mm)} × ${fmt(c.depth_mm)} mm, ${c.levels} livelli: pezzi calcolati nel browser, gli stessi del pacchetto STL.`;
   data.model_note_html=`<span class="badge">Configurazione personalizzata</span><p>Modulo ${fmt(c.width_mm)} × ${fmt(c.depth_mm)} × ${fmt(pitch)} mm, cassetto ${fmt(tw)} × ${fmt(td)} mm. Vista e lista pezzi usano la geometria generata nel browser; scarica gli STL da <b>Configura</b>. I testi con le quote si riferiscono ancora allo standard.</p>`;
   O.applied=c;
-  return data;
+  return c;
 }
 
-Object.assign(O,{KEY_DRAFT,KEY_APPLIED,STANDARD,load,save,isStandard,patch});
+Object.assign(O,{KEY_DRAFT,KEY_APPLIED,KEY_LEVELS,STANDARD,load,save,isStandard,patch});
 })(window.OrganizerCfg=window.OrganizerCfg||{});
 
 /* dati/js/pannello.js */
@@ -278,6 +300,8 @@ const CSS=`
 .cfg-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.cfg-facts div{border:1px solid var(--line);border-radius:10px;padding:6px 8px}.cfg-facts b{display:block;font-size:15px;font-variant-numeric:tabular-nums}.cfg-facts span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .cfg-actions{position:sticky;bottom:-18px;margin:14px -18px -18px;padding:12px 18px 16px;background:var(--card);border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px}
 .cfg-actions button{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer;background:var(--accent);color:#fff}.cfg-actions button.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}.cfg-actions button:disabled{opacity:.5;cursor:not-allowed}
+.cfg-auto{flex-basis:100%;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer}.cfg-auto input{width:18px;height:18px;accent-color:var(--accent)}
+.cfg-levels{margin-top:10px}
 .cfg-status{flex-basis:100%;margin:0;font-size:12.5px;color:var(--muted);min-height:18px}.cfg-status.err{color:#b3412f;font-weight:700}.cfg-status.ok{color:var(--accent);font-weight:700}
 @media(max-width:520px){.cfg-panel{top:0;right:0;bottom:0;width:100%;border-radius:0}.cfg-grid{grid-template-columns:1fr}.cfg-control.wide{grid-column:auto}.cfg-facts{grid-template-columns:repeat(2,1fr)}.cfg-fab{right:12px;bottom:12px}}
 @media print{.cfg-fab,.cfg-panel,.cfg-back{display:none}}`;
@@ -289,10 +313,10 @@ function markup(){
   return `<div class="cfg-back" id="cfg_back"></div><aside class="cfg-panel" id="cfg_panel" role="dialog" aria-modal="true" aria-labelledby="cfg_title">
 <div class="cfg-head"><div><h2 id="cfg_title">Configura il modulo</h2><p>Quote in millimetri. <b>Applica</b> salva la configurazione e rigenera l’anteprima 3D con i pezzi calcolati qui.</p></div><button class="cfg-x" id="cfg_close" type="button" aria-label="Chiudi">×</button></div>
 <div class="cfg-grid" style="margin-top:14px">${sel('cfg_preset','Tipologia iniziale',Object.entries(PRESET_NAMES))}${sel('cfg_divider_mode','Divisori',[['open','Nessuno'],['lane','Una corsia centrale'],['grid','Griglia con tre traversi']])}</div>
-${SECTIONS.map(([title,fields])=>`<div class="cfg-sec">${title}</div><div class="cfg-grid">${fields.map((f,i)=>control(f,fields.length%2&&i===fields.length-1)).join('')}</div>`).join('')}
+${SECTIONS.map(([title,fields],si)=>`<div class="cfg-sec">${title}</div><div class="cfg-grid">${fields.map((f,i)=>control(f,fields.length%2&&i===fields.length-1)).join('')}</div>${si?'':'<label class="cfg-auto cfg-levels"><input type="checkbox" id="cfg_levels_show">Mostra più livelli nell’anteprima 3D</label>'}`).join('')}
 <div class="cfg-sec">Pianta</div><div class="cfg-plan" id="cfg_plan"></div>
 <div class="cfg-facts"><div><b id="cfg_f_pitch"></b><span>passo mm</span></div><div><b id="cfg_f_tray"></b><span>cassetto mm</span></div><div><b id="cfg_f_grooves"></b><span>sedi per lato</span></div><div><b id="cfg_f_total"></b><span>telaio mm</span></div></div>
-<div class="cfg-actions"><button id="cfg_apply" type="button">Applica all’anteprima</button><button id="cfg_zip" class="sec" type="button">Scarica ZIP STL</button><button id="cfg_std" class="sec" type="button">Torna allo standard</button><p class="cfg-status" id="cfg_status" role="status" aria-live="polite"></p></div>
+<div class="cfg-actions"><button id="cfg_apply" type="button">Applica all’anteprima</button><button id="cfg_zip" class="sec" type="button">Scarica ZIP STL</button><button id="cfg_std" class="sec" type="button">Torna allo standard</button><label class="cfg-auto"><input type="checkbox" id="cfg_auto">Applica automaticamente a ogni modifica</label><p class="cfg-status" id="cfg_status" role="status" aria-live="polite"></p></div>
 </aside><button class="cfg-fab" id="cfg_fab" type="button" aria-controls="cfg_panel"><i></i>Configura<small id="cfg_fab_info"></small></button>`}
 
 function readForm(){const c={preset:$('cfg_preset').value,divider_mode:$('cfg_divider_mode').value};for(const k of O.numeric)c[k]=Number($(`cfg_${k}_n`).value);return c}
@@ -329,10 +353,22 @@ async function downloadZip(){let c;try{c=O.validate(readForm())}catch(e){status(
     status(`ZIP creato: ${parts.length} STL per modulo, ${Math.round(bytes.length/1024)} KiB.`,'ok')}
   catch(e){status('Errore: '+e.message,'err');console.error(e)}finally{b.disabled=false}}
 
-function apply(c){if(!O.save(O.KEY_APPLIED,c)){status('Il browser non consente di salvare le preferenze: impossibile applicare.','err');return}
-  O.save(O.KEY_DRAFT,c);status('Rigenerazione dell’anteprima…','ok');history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>location.reload(),60)}
+// Dopo il ricaricamento si ritrovano pannello, scroll e inquadratura (variabili globali del visualizzatore).
+const KEY_RESTORE='organizer-ripristino',KEY_AUTO='organizer-auto-applica';
+const same=(a,b)=>!!a&&!!b&&O.numeric.every(k=>a[k]===b[k])&&a.divider_mode===b.divider_mode;
+function saveView(){const v={open:document.documentElement.classList.contains('cfg-open'),panel:$('cfg_panel').scrollTop,page:scrollY};
+  try{Object.assign(v,{yaw,pitch,zoom,panX,panY,explode,selected})}catch(_){}
+  try{sessionStorage.setItem(KEY_RESTORE,JSON.stringify(v))}catch(_){}}
+function restoreView(){let v;try{v=JSON.parse(sessionStorage.getItem(KEY_RESTORE)||'null');sessionStorage.removeItem(KEY_RESTORE)}catch(_){}
+  if(!v)return;scrollTo(0,v.page||0);if(v.open){open(true,false);$('cfg_panel').scrollTop=v.panel||0}
+  try{yaw=v.yaw;pitch=v.pitch;zoom=v.zoom;panX=v.panX;panY=v.panY;explode=v.explode||0;if(explode&&typeof setMode==='function')setMode(true);if(v.selected&&typeof pick==='function'&&document.querySelector(`[data-id="${v.selected}"]`))pick(v.selected);if(typeof requestDraw==='function')requestDraw()}catch(_){}}
+function apply(c){const current=O.applied||O.STANDARD;if(same(c,current)){status('Questa configurazione è già applicata all’anteprima.');return}
+  if(!O.save(O.KEY_APPLIED,c)){status('Il browser non consente di salvare le preferenze: impossibile applicare.','err');return}
+  O.save(O.KEY_DRAFT,c);status('Rigenerazione dell’anteprima…','ok');saveView();history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>location.reload(),60)}
+let autoTimer=0;
+function autoApply(delay){clearTimeout(autoTimer);if(!$('cfg_auto').checked)return;autoTimer=setTimeout(()=>{try{apply(O.validate(readForm()))}catch(_){}},delay)}
 
-function open(on){document.documentElement.classList.toggle('cfg-open',on);if(on){render();$('cfg_close').focus()}else $('cfg_fab').focus()}
+function open(on,focus=true){document.documentElement.classList.toggle('cfg-open',on);if(on){render();if(focus)$('cfg_close').focus({preventScroll:true})}else $('cfg_fab').focus({preventScroll:true})}
 
 function mount(){
   const st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
@@ -342,9 +378,9 @@ function mount(){
   $('cfg_fab').title=a?'Anteprima con configurazione personalizzata':'Anteprima dello standard';
   for(const k of O.numeric){const n=$(`cfg_${k}_n`),r=$(`cfg_${k}`);
     const sync=src=>{(src===n?r:n).value=src.value;if(PRESET_KEYS.includes(k))$('cfg_preset').value=matchingPreset(readForm());render()};
-    n.addEventListener('input',()=>sync(n));r.addEventListener('input',()=>sync(r))}
-  $('cfg_divider_mode').addEventListener('change',render);
-  $('cfg_preset').addEventListener('change',()=>{const v=O.PRESETS[$('cfg_preset').value];if(v)PRESET_KEYS.forEach((k,i)=>{$(`cfg_${k}_n`).value=v[i];$(`cfg_${k}`).value=v[i]});render()});
+    n.addEventListener('input',()=>{sync(n);autoApply(900)});r.addEventListener('input',()=>sync(r));r.addEventListener('change',()=>autoApply(150))}
+  $('cfg_divider_mode').addEventListener('change',()=>{render();autoApply(150)});
+  $('cfg_preset').addEventListener('change',()=>{const v=O.PRESETS[$('cfg_preset').value];if(v)PRESET_KEYS.forEach((k,i)=>{$(`cfg_${k}_n`).value=v[i];$(`cfg_${k}`).value=v[i]});render();autoApply(150)});
   $('cfg_apply').addEventListener('click',()=>{try{apply(O.validate(readForm()))}catch(e){status(e.message,'err')}});
   $('cfg_zip').addEventListener('click',downloadZip);
   $('cfg_std').addEventListener('click',()=>{writeForm(O.STANDARD);O.save(O.KEY_DRAFT,null);if(O.applied)apply({...O.STANDARD});else render()});
@@ -353,7 +389,11 @@ function mount(){
   // Link "#configura" nella pagina (e redirect da configuratore.html) aprono il pannello.
   const byHash=()=>{if(location.hash==='#configura'){open(true);history.replaceState(null,'',location.pathname+location.search)}};
   window.addEventListener('hashchange',byHash);byHash();
-  render()}
+  $('cfg_levels_show').checked=!!O.showLevels;
+  $('cfg_levels_show').addEventListener('change',e=>{try{localStorage.setItem(O.KEY_LEVELS,e.target.checked?'1':'0')}catch(_){}status('Rigenerazione dell’anteprima…','ok');saveView();setTimeout(()=>location.reload(),60)});
+  let auto=false;try{auto=localStorage.getItem(KEY_AUTO)==='1'}catch(_){}$('cfg_auto').checked=auto;
+  $('cfg_auto').addEventListener('change',()=>{try{localStorage.setItem(KEY_AUTO,$('cfg_auto').checked?'1':'0')}catch(_){}autoApply(150)});
+  render();restoreView()}
 
 O.openPanel=open;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();

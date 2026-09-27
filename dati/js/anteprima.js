@@ -2,7 +2,7 @@
 // sostituisce i pezzi standard della guida con quelli generati nel browser.
 (function(O){
 "use strict";
-const KEY_DRAFT='organizer-config',KEY_APPLIED='organizer-config-applicata';
+const KEY_DRAFT='organizer-config',KEY_APPLIED='organizer-config-applicata',KEY_LEVELS='organizer-mostra-livelli';
 const STANDARD={preset:'standard',divider_mode:'lane',width_mm:320,depth_mm:340,tray_height_mm:48,clearance_above_mm:58,levels:3,groove_pitch_mm:20,groove_width_mm:3,groove_depth_mm:1,divider_thickness_mm:2.4,wall_mm:3.2,post_mm:22,side_clearance_mm:0.5,vertical_clearance_mm:0.4};
 
 function load(key){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v&&typeof v==='object'?{...STANDARD,...v}:null}catch(_){return null}}
@@ -20,10 +20,33 @@ function indexed(tris){const map=new Map(),vertices=[],triangles=[];const at=v=>
 
 function labelFor(name){const m=name.match(/^Divisorio_trasversale_(\d+)$/);return m?`Divisorio trasversale ${m[1]}`:name.replace(/_L1$/,'').replace(/_/g,' ')}
 
+// Ingombro e direzioni dell'esploso come in build_guide.py.
+function layout(data){const parts=data.parts;
+  const box=[0,1,2].map(i=>Math.min(...parts.map(p=>p.box[i]))).concat([3,4,5].map(i=>Math.max(...parts.map(p=>p.box[i]))));
+  const center=[0,1,2].map(i=>(box[i]+box[i+3])/2),size=Math.max(box[3]-box[0],box[4]-box[1],box[5]-box[2]),dist=Math.round(size*.8)/10;
+  data.assembly={box,center,size};data.spread={};
+  for(const p of parts){const v=[0,1,2].map(i=>(p.box[i]+p.box[i+3])/2-center[i]),L=Math.hypot(...v);data.spread[p.id]=L>1e-6?v.map(x=>Math.round(x/L*dist*100)/100):[0,0,0]}}
+
+// "Mostra più livelli": ogni pezzo diventa la pila delle sue copie, così lista e quantità restano invariate
+// e selezionando un pezzo si evidenziano tutti i livelli.
+function stack(data,c){const n=c.levels,pitch=c.tray_height_mm+c.clearance_above_mm;
+  for(const p of data.parts){if(p.kind!=='mesh')continue;const nv=p.vertices.length,v=[],t=[];
+    for(let l=0;l<n;l++){for(const q of p.vertices)v.push([q[0],q[1],Math.round((q[2]+l*pitch)*100)/100]);for(const tr of p.triangles)t.push(tr.map(i=>i+l*nv))}
+    p.vertices=v;p.triangles=t;p.box=[...p.box.slice(0,5),p.box[5]+(n-1)*pitch]}
+  data.caption=(data.caption||'')+` Vista con ${n} livelli impilati.`}
+
 function patch(data){
-  const c=load(KEY_APPLIED);O.applied=null;O.standardData=data;
-  if(!c||isStandard(c))return data;
-  let generated;try{O.validate(c);generated=O.partsForConfig(c)}catch(e){console.warn('Configurazione non valida, uso lo standard',e);return data}
+  O.standardData=data;O.applied=null;
+  const c=customize(data),shown=c||STANDARD;
+  try{O.showLevels=localStorage.getItem(KEY_LEVELS)==='1'}catch(_){O.showLevels=false}
+  if(O.showLevels&&shown.levels>1)stack(data,shown);
+  if(c||(O.showLevels&&shown.levels>1))layout(data);
+  return data}
+
+function customize(data){
+  const c=load(KEY_APPLIED);
+  if(!c||isStandard(c))return null;
+  let generated;try{O.validate(c);generated=O.partsForConfig(c)}catch(e){console.warn('Configurazione non valida, uso lo standard',e);return null}
   const groups=data.groups||{},byName={},oldName={};
   for(const p of data.parts){byName[nameOf(p)]=p;oldName[p.id]=nameOf(p)}
   const parts=generated.map(g=>{const ref=byName[g.name],geo=indexed(O.previewMesh(g.adds,g.subs)),css=ref?ref.css_color:(groups[g.group]||{}).color||'#b97058';
@@ -37,11 +60,6 @@ function patch(data){
     if((s.parts||[]).length===data.parts.length)r.parts=all;return r}).filter((s,i)=>s.parts.length||!(data.steps[i].parts||[]).length);
   if(data.map)for(const card of data.map.cards||[])if(card.ids)card.ids=all.filter(id=>remap(card.ids).includes(id)||extra.includes(id));
   data.parts=parts;
-  // Ingombro e direzioni dell'esploso come in build_guide.py.
-  const box=[0,1,2].map(i=>Math.min(...parts.map(p=>p.box[i]))).concat([3,4,5].map(i=>Math.max(...parts.map(p=>p.box[i]))));
-  const center=[0,1,2].map(i=>(box[i]+box[i+3])/2),size=Math.max(box[3]-box[0],box[4]-box[1],box[5]-box[2]),dist=Math.round(size*.8)/10;
-  data.assembly={box,center,size};data.spread={};
-  for(const p of parts){const v=[0,1,2].map(i=>(p.box[i]+p.box[i+3])/2-center[i]),L=Math.hypot(...v);data.spread[p.id]=L>1e-6?v.map(x=>Math.round(x/L*dist*100)/100):[0,0,0]}
   const pitch=c.tray_height_mm+c.clearance_above_mm,wall=c.wall_mm,tw=c.width_mm-2*c.post_mm-2*c.side_clearance_mm,td=c.depth_mm-c.post_mm-8;
   const xs=O.slots(tw-2*wall,c.groove_pitch_mm),ys=O.slots(td-2*wall,c.groove_pitch_mm);
   const facts=(data.header||{}).facts||[],set=(i,v)=>{if(facts[i])facts[i].value=v};
@@ -50,8 +68,8 @@ function patch(data){
   data.caption=`Anteprima della configurazione ${fmt(c.width_mm)} × ${fmt(c.depth_mm)} mm, ${c.levels} livelli: pezzi calcolati nel browser, gli stessi del pacchetto STL.`;
   data.model_note_html=`<span class="badge">Configurazione personalizzata</span><p>Modulo ${fmt(c.width_mm)} × ${fmt(c.depth_mm)} × ${fmt(pitch)} mm, cassetto ${fmt(tw)} × ${fmt(td)} mm. Vista e lista pezzi usano la geometria generata nel browser; scarica gli STL da <b>Configura</b>. I testi con le quote si riferiscono ancora allo standard.</p>`;
   O.applied=c;
-  return data;
+  return c;
 }
 
-Object.assign(O,{KEY_DRAFT,KEY_APPLIED,STANDARD,load,save,isStandard,patch});
+Object.assign(O,{KEY_DRAFT,KEY_APPLIED,KEY_LEVELS,STANDARD,load,save,isStandard,patch});
 })(window.OrganizerCfg=window.OrganizerCfg||{});
