@@ -130,7 +130,12 @@ function mount(){
   // Predefinito: il primo clic chiede conferma cambiando l'etichetta, il secondo ripristina.
   let stdTimer=0;const std=$('cfg_std'),stdReset=()=>{clearTimeout(stdTimer);std.textContent='Predefinito';std.classList.remove('warn');delete std.dataset.confirm};
   std.addEventListener('click',()=>{if(!std.dataset.confirm){std.dataset.confirm='1';std.textContent='Confermi? Ripristina';std.classList.add('warn');stdTimer=setTimeout(stdReset,4000);return}
-    stdReset();writeForm(O.STANDARD);O.save(O.KEY_DRAFT,null);if(O.applied)apply({...O.STANDARD});else render()});
+    stdReset();writeForm(O.STANDARD);O.save(O.KEY_DRAFT,null);
+    // Il predefinito spegne anche la vista a più livelli.
+    $('cfg_levels_show').checked=false;try{localStorage.setItem(O.KEY_LEVELS,'0')}catch(_){}
+    if(O.applied)apply({...O.STANDARD});
+    else if(O.showLevels){status('Rigenerazione dell’anteprima…','ok');saveView();setTimeout(()=>location.reload(),60)}
+    else render()});
   std.addEventListener('blur',stdReset);
   $('cfg_fab').addEventListener('click',()=>open(true));$('cfg_close').addEventListener('click',()=>open(false));$('cfg_back').addEventListener('click',()=>open(false));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.documentElement.classList.contains('cfg-open'))open(false)});
