@@ -83,6 +83,7 @@ section{scroll-margin-top:20px;margin-top:34px}.section-head{display:flex;align-
 <section class="card" id="files" hidden><h2 id="filesTitle"></h2><div id="filesIntro"></div><div class="links" id="fileLinks"></div></section>
 </main>
 <footer id="footer"></footer>
+
 <!--configuratore:inizio--><script>
 /* dati/js/geometria.js */
 // Geometria parametrica del modulo: stesse quote dello script Blender (organizer_parametrico.py).
@@ -285,7 +286,7 @@ const CSS=`
 .cfg-panel{position:fixed;top:16px;right:16px;bottom:16px;width:min(470px,calc(100vw - 32px));overflow-y:auto;overflow-x:hidden;z-index:1000;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 22px 60px rgba(35,31,25,.28);transform:translateX(calc(100% + 40px));transition:transform .2s ease;scrollbar-gutter:stable}
 .cfg-open .cfg-panel{transform:none}.cfg-open .cfg-back{opacity:1;pointer-events:auto}
 .cfg-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.cfg-head h2{margin:0;font-size:22px}.cfg-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
-.cfg-x{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;width:36px;height:36px;font-size:20px;cursor:pointer;flex:none}
+.cfg-x{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;width:36px;height:36px;min-width:0;padding:0;margin:0;line-height:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}.cfg-x:hover{background:var(--bg)}.cfg-x svg{width:16px;height:16px;display:block}
 .cfg-sec{font-size:11px;text-transform:uppercase;letter-spacing:.11em;color:var(--accent);font-weight:900;margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--line)}
 .cfg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .cfg-control{padding:9px 10px;background:var(--bg);border:1px solid var(--line);border-radius:12px;min-width:0}
@@ -311,7 +312,7 @@ function control([k,label,min,max,step],wide){return `<div class="cfg-control${w
 function markup(){
   const sel=(id,label,opts)=>`<div class="cfg-control"><label for="${id}"><span class="cfg-name">${label}</span></label><select id="${id}">${opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></div>`;
   return `<div class="cfg-back" id="cfg_back"></div><aside class="cfg-panel" id="cfg_panel" role="dialog" aria-modal="true" aria-labelledby="cfg_title">
-<div class="cfg-head"><div><h2 id="cfg_title">Configura il modulo</h2><p>Quote in millimetri. <b>Applica</b> salva la configurazione e rigenera l’anteprima 3D con i pezzi calcolati qui.</p></div><button class="cfg-x" id="cfg_close" type="button" aria-label="Chiudi">×</button></div>
+<div class="cfg-head"><div><h2 id="cfg_title">Configura il modulo</h2><p>Quote in millimetri. <b>Applica</b> salva la configurazione e rigenera l’anteprima 3D con i pezzi calcolati qui.</p></div><button class="cfg-x" id="cfg_close" type="button" aria-label="Chiudi"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
 <div class="cfg-grid" style="margin-top:14px">${sel('cfg_preset','Tipologia iniziale',Object.entries(PRESET_NAMES))}${sel('cfg_divider_mode','Divisori',[['open','Nessuno'],['lane','Una corsia centrale'],['grid','Griglia con tre traversi']])}</div>
 ${SECTIONS.map(([title,fields],si)=>`<div class="cfg-sec">${title}</div><div class="cfg-grid">${fields.map((f,i)=>control(f,fields.length%2&&i===fields.length-1)).join('')}</div>${si?'':'<label class="cfg-auto cfg-levels"><input type="checkbox" id="cfg_levels_show">Mostra più livelli nell’anteprima 3D</label>'}`).join('')}
 <div class="cfg-sec">Pianta</div><div class="cfg-plan" id="cfg_plan"></div>
