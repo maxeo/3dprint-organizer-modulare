@@ -76,7 +76,7 @@ function dividerUi(c){const g=O.dividerGrid(c),mod=c.divider_mode!=='disegno';
   let runs=[];try{runs=O.dividerRuns(c)}catch(_){}
   const n=a=>runs.filter(r=>r.axis===a).length;
   $('cfg_dv_info').innerHTML=mod?`Sedi: ${g.xs.length} per i longitudinali, ${g.ys.length} per i trasversali. Ogni pezzo ha un intaglio a ogni sede: si sposta e si incrocia come vuoi.`
-    :runs.length?`Schema a mano: <b>${n('v')}</b> longitudinali e <b>${n('h')}</b> trasversali su misura, intagli solo agli incroci.`:'Schema vuoto: nessun divisorio.';
+    :runs.length?`Schema a mano: <b>${n('v')}</b> longitudinali e <b>${n('h')}</b> trasversali su misura, intaglio a ogni sede e giunto a T dove un pezzo finisce contro un altro.`:'Schema vuoto: nessun divisorio.';
   $('cfg_dv_draw').textContent=mod?'Disegna i divisori…':'Modifica lo schema…'}
 function matchingPreset(c){return Object.keys(O.PRESETS).find(p=>O.PRESETS[p].every((v,i)=>c[PRESET_KEYS[i]]===v))||'custom'}
 function status(text,cls=''){const s=$('cfg_status');s.textContent=text;s.className='cfg-status'+(cls?' '+cls:'')}
@@ -123,7 +123,7 @@ async function downloadZip(){let c;try{c=O.validate(readForm())}catch(e){status(
 function dividerTag(c){const sp=O.dividerSpec(c);return sp.mode==='disegno'?'divisori-disegnati':`divisori${sp.long}x${sp.cross}`}
 function dividerText(c){const runs=O.dividerRuns(c),nv=runs.filter(r=>r.axis==='v').length,nh=runs.length-nv;
   if(!runs.length)return 'Divisori: nessuno.';
-  return `Divisori: ${nv} longitudinali e ${nh} trasversali per cassetto (quantita nel manifest). I longitudinali hanno gli intagli in alto, i trasversali in basso: si incastrano a mezzo legno. ${O.dividerSpec(c).mode==='disegno'?'Schema disegnato: ogni pezzo ha gli intagli solo dove incrocia un altro.':'Ogni pezzo ha un intaglio a ogni sede, quindi si puo spostare in qualsiasi sede.'}`}
+  return `Divisori: ${nv} longitudinali e ${nh} trasversali per cassetto (quantita nel manifest). I longitudinali hanno gli intagli in alto, i trasversali in basso: si incastrano a mezzo legno. ${O.dividerSpec(c).mode==='disegno'?'Schema disegnato: ogni pezzo ha un intaglio a ogni sede; dove finisce contro un altro lo attraversa e sporge di 4 mm (giunto a T): montare prima i longitudinali, poi calare i trasversali.':'Ogni pezzo ha un intaglio a ogni sede, quindi si puo spostare in qualsiasi sede.'}`}
 // Dopo il ricaricamento si ritrovano pannello, scroll e inquadratura (variabili globali del visualizzatore).
 const KEY_RESTORE='organizer-ripristino',KEY_AUTO='organizer-auto-applica';
 const same=(a,b)=>!!a&&!!b&&O.numeric.every(k=>a[k]===b[k])&&O.dividerKey(a)===O.dividerKey(b)&&O.wheelCount(a)===O.wheelCount(b);

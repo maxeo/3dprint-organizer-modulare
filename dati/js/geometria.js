@@ -51,7 +51,7 @@ function mortiseL(axis,cx,cy,inward,z){const off=inward*(8.5/2-(HOOK_LEN+0.7)/2)
 // ---------------- divisori ----------------
 // Due modalità. 'modulare': quanti longitudinali (fronte-fondo) e quanti trasversali (sponda-sponda), distribuiti sulle
 // sedi; ogni pezzo ha un intaglio a ogni sede, quindi si sposta e si incrocia liberamente. 'disegno': schema fatto nel
-// modale (tratti fra sedi vicine); pezzi su misura con intagli solo agli incroci. Intagli a mezzo legno, da un lato solo:
+// modale (tratti fra sedi vicine); pezzi su misura, intaglio a ogni sede e giunto a T dove un pezzo finisce contro un altro. Intagli a mezzo legno, da un lato solo:
 // longitudinali da sopra, trasversali da sotto. Le vecchie modalità open/lane/grid valgono 0+0, 1+0, 1+3.
 const LEGACY_DIV={open:[0,0],lane:[1,0],grid:[1,3]};
 function dividerSpec(c){const l=LEGACY_DIV[c.divider_mode];
@@ -79,16 +79,19 @@ function layoutEdges(c){const g=dividerGrid(c),sp=dividerSpec(c),v=new Set(),h=n
     for(const e of sp.v)if(ok(e,g.xs.length,g.yn.length-1))v.add(e);for(const e of sp.h)if(ok(e,g.ys.length,g.xn.length-1))h.add(e)}
   return {g,sp,v,h}}
 // Pezzi: tratti consecutivi sulla stessa sede. u0/u1: estremi lungo il pezzo (dal centro del cassetto); cuts: posizioni
-// degli intagli. Estremi: in una parete entra nella sua sede; contro un pezzo che passa si ferma sulla sua faccia; in un
-// angolo o libero arriva fino al bordo del nodo (negli angoli il nodo va al longitudinale).
-function dividerRuns(c){const {g,sp,v,h}=layoutEdges(c),gd=c.groove_depth_mm,t=c.divider_thickness_mm/2,runs=[];
-  // tratti che toccano il nodo (a indice in xn, b indice in yn)
-  const vAt=(a,b)=>[v.has(`${a-1}:${b-1}`),v.has(`${a-1}:${b}`)],hAt=(a,b)=>[h.has(`${b-1}:${a-1}`),h.has(`${b-1}:${a}`)];
+// degli intagli. Ogni pezzo, lungo o corto, ha un intaglio a ogni sede interna che attraversa (resta modulare).
+// Estremi: in una parete entra nella sua sede. Dove finisce contro un pezzo perpendicolare (T o angolo) lo attraversa con
+// l'intaglio a mezzo legno e sporge dall'altra parte di DIVIDER_TEE a tutta altezza: la testa a T lo blocca in entrambi
+// i versi. Se finisce nel vuoto si ferma al bordo del nodo.
+const DIVIDER_TEE=4;
+function dividerRuns(c){const {g,v,h}=layoutEdges(c),gd=c.groove_depth_mm,gw=c.groove_width_mm,t=c.divider_thickness_mm/2,runs=[];
+  // c'è un tratto perpendicolare sul nodo (a indice in xn, b indice in yn)?
+  const vAt=(a,b)=>v.has(`${a-1}:${b-1}`)||v.has(`${a-1}:${b}`),hAt=(a,b)=>h.has(`${b-1}:${a-1}`)||h.has(`${b-1}:${a}`);
   const scan=(set,lines,nodes,axis)=>{for(let i=0;i<lines.length;i++)for(let k=0;k<nodes.length-1;k++){
     if(!set.has(`${i}:${k}`)||(k>0&&set.has(`${i}:${k-1}`)))continue;let e=k+1;while(e<nodes.length-1&&set.has(`${i}:${e}`))e++;
-    const other=n=>axis==='v'?hAt(i+1,n):vAt(n,i+1),end=(n,sg)=>{if(n===0||n===nodes.length-1)return nodes[n]+sg*(gd-0.2);
-      const o=other(n);return (o[0]&&o[1])||(axis==='h'&&(o[0]||o[1]))?nodes[n]-sg*t:nodes[n]+sg*t};
-    const cuts=[];for(let n=k+1;n<e;n++){const o=other(n);if(sp.mode==='modulare'||(o[0]&&o[1]))cuts.push(nodes[n])}
+    const wall=n=>n===0||n===nodes.length-1,other=n=>axis==='v'?hAt(i+1,n):vAt(n,i+1);
+    const end=(n,sg)=>wall(n)?nodes[n]+sg*(gd-0.2):other(n)?nodes[n]+sg*(gw/2+DIVIDER_TEE):nodes[n]+sg*t;
+    const cuts=[];for(let n=k;n<=e;n++)if(!wall(n)&&((n>k&&n<e)||other(n)))cuts.push(nodes[n]);
     runs.push({axis,line:lines[i],u0:end(k,-1),u1:end(e,1),cuts})}};
   scan(v,g.xs,g.yn,'v');scan(h,g.ys,g.xn,'h');
   return runs}
@@ -182,5 +185,5 @@ function previewMesh(adds,subs,late,lateSubs){
 // Pezzi che non entrano nell'area di stampa X x Y x Z in nessuna delle sei orientazioni a 90°.
 const PERMS=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
 function oversize(parts,bed=PRINT_BED){const B=[bed.x,bed.y,bed.z].map(v=>v+1e-6);return parts.map(p=>{const d=p.dims||[0,2,4].map(k=>Math.max(...p.adds.map(b=>b[k+1]))-Math.min(...p.adds.map(b=>b[k])));return {id:p.id,name:p.name,dims:d}}).filter(p=>!PERMS.some(o=>o.every((a,k)=>p.dims[a]<=B[k])))}
-Object.assign(O,{dividerKey,dividerSpec,dividerGrid,layoutEdges,dividerRuns,PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
+Object.assign(O,{DIVIDER_TEE,dividerKey,dividerSpec,dividerGrid,layoutEdges,dividerRuns,PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
 })(window.OrganizerCfg=window.OrganizerCfg||{});

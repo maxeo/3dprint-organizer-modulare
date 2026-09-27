@@ -506,8 +506,10 @@ def cut_tray_grooves(tray, c, cx, cy, z, tw, td, col):
 # distribuiti sulle sedi; ogni pezzo ha un intaglio a ogni sede, quindi si sposta e si incrocia liberamente.
 # 'disegno': divider_layout = {"v": ["i:k", ...], "h": ["j:k", ...]}, tratti fra sedi vicine (lo schema del modale della
 # guida): v "i:k" e' il longitudinale sulla sede xs[i] fra i nodi yn[k] e yn[k+1], h "j:k" il trasversale sulla sede
-# ys[j] fra xn[k] e xn[k+1]; pezzi su misura con intagli solo agli incroci. Intagli a mezzo legno da un lato solo:
+# ys[j] fra xn[k] e xn[k+1]; pezzi su misura, intaglio a ogni sede attraversata e giunto a T dove un pezzo
+# finisce contro un altro. Intagli a mezzo legno da un lato solo:
 # longitudinali da sopra, trasversali da sotto. Vecchie modalita': open = 0+0, lane = 1+0, grid = 1+3.
+DIVIDER_TEE = 4.0  # sporgenza a tutta altezza oltre il pezzo attraversato, nei giunti a T
 LEGACY_DIVIDERS = {"open": (0, 0), "lane": (1, 0), "grid": (1, 3)}
 
 
@@ -529,6 +531,7 @@ def spread_on(slots, n, span, what):
 
 def divider_runs(c, tw, td):
     wall, gd, t = c["wall_mm"], c["groove_depth_mm"], c["divider_thickness_mm"] / 2
+    gw = c["groove_width_mm"]
     xs = slot_positions(tw - 2 * wall, c["groove_pitch_mm"])
     ys = slot_positions(td - 2 * wall, c["groove_pitch_mm"])
     xn = [-(tw / 2 - wall)] + xs + [tw / 2 - wall]
@@ -554,10 +557,10 @@ def divider_runs(c, tw, td):
             h.update((ys.index(y), k) for k in range(len(xn) - 1))
 
     def v_at(a, b):
-        return ((a - 1, b - 1) in v, (a - 1, b) in v)
+        return (a - 1, b - 1) in v or (a - 1, b) in v
 
     def h_at(a, b):
-        return ((b - 1, a - 1) in h, (b - 1, a) in h)
+        return (b - 1, a - 1) in h or (b - 1, a) in h
 
     runs = []
     for axis, edges, lines, nodes in (("v", v, xs, yn), ("h", h, ys, xn)):
@@ -569,20 +572,24 @@ def divider_runs(c, tw, td):
                 while e < len(nodes) - 1 and (i, e) in edges:
                     e += 1
 
+                def wall_at(n):
+                    return n in (0, len(nodes) - 1)
+
                 def other(n):
                     return h_at(i + 1, n) if axis == "v" else v_at(n, i + 1)
 
                 def end(n, sg):
-                    # parete: dentro la sua sede; contro un pezzo che passa: sulla sua faccia; angolo o libero: bordo del
-                    # nodo (negli angoli il nodo va al longitudinale)
-                    if n in (0, len(nodes) - 1):
+                    # parete: dentro la sua sede; contro un perpendicolare (T o angolo): lo attraversa a mezzo legno e
+                    # sporge di DIVIDER_TEE a tutta altezza (testa a T); nel vuoto: bordo del nodo
+                    if wall_at(n):
                         return nodes[n] + sg * (gd - 0.2)
-                    o = other(n)
-                    if (o[0] and o[1]) or (axis == "h" and (o[0] or o[1])):
-                        return nodes[n] - sg * t
+                    if other(n):
+                        return nodes[n] + sg * (gw / 2 + DIVIDER_TEE)
                     return nodes[n] + sg * t
 
-                cuts = [nodes[n] for n in range(k + 1, e) if mode != "disegno" or all(other(n))]
+                # intaglio a ogni sede interna attraversata e sugli estremi con un perpendicolare
+                cuts = [nodes[n] for n in range(k, e + 1)
+                        if not wall_at(n) and (k < n < e or other(n))]
                 runs.append(dict(axis=axis, line=lines[i], u0=end(k, -1), u1=end(e, 1), cuts=cuts))
     return runs
 

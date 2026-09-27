@@ -1,5 +1,5 @@
 // Modale "Disegna i divisori": la pianta interna del cassetto con le sedi; si colorano i tratti fra due sedi vicine
-// (clic o trascinamento, anche col dito). Dallo schema geometria.js ricava pezzi su misura con intagli solo agli incroci.
+// (clic o trascinamento, anche col dito). Dallo schema geometria.js ricava pezzi su misura: intaglio a ogni sede, giunto a T dove un pezzo finisce contro un altro.
 (function(O){
 "use strict";
 const $=id=>document.getElementById(id);
@@ -31,7 +31,7 @@ function mount(){if(mounted)return;mounted=true;
   const st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
   const d=document.createElement('div');d.className='dv-back';d.id='dv_back';
   d.innerHTML=`<div class="dv-box" role="dialog" aria-modal="true" aria-labelledby="dv_title">
-<div class="dv-head"><div><h2 id="dv_title">Disegna i divisori</h2><p>Colora i tratti fra le sedi: clic per aggiungere o togliere, trascina lungo una sede per colorarne tanti. Un clic sul numero di una sede la riempie o la svuota tutta. I pezzi si generano su misura, con gli intagli solo dove si incrociano.</p></div>
+<div class="dv-head"><div><h2 id="dv_title">Disegna i divisori</h2><p>Colora i tratti fra le sedi: clic per aggiungere o togliere, trascina lungo una sede per colorarne tanti. Un clic sul numero di una sede la riempie o la svuota tutta. I pezzi escono su misura, con un intaglio a ogni sede; dove un pezzo finisce contro un altro lo attraversa e sporge di qualche millimetro dall’altra parte (giunto a T), così resta bloccato.</p></div>
 <button class="cfg-x" id="dv_close" type="button" aria-label="Chiudi"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
 <div class="dv-tools"><label>Longitudinali <input id="dv_long" type="number" min="0" step="1"></label><label>Trasversali <input id="dv_cross" type="number" min="0" step="1"></label><button id="dv_fill" type="button" title="Disegna i divisori modulari indicati, distribuiti sulle sedi">Disegna</button><button id="dv_clear" type="button">Svuota</button></div>
 <div class="dv-plan" id="dv_plan"></div><p class="dv-sum" id="dv_sum" aria-live="polite"></p>
@@ -83,9 +83,11 @@ function draw(){const g=grid(),r=n=>Math.round(n*100)/100,W=g.tw-2*g.wall,D=g.td
   // riepilogo dei pezzi che verranno generati
   try{const runs=O.dividerRuns({...base,divider_mode:'disegno',divider_layout:layout()});
     if(!runs.length){sum('Nessun divisorio: il cassetto resta libero.');return}
-    const kinds=new Set(runs.map(q=>`${q.axis}|${O.round(q.u1-q.u0,3)}|${q.cuts.map(u=>O.round(u-q.u0,3))}`)),cuts=runs.reduce((a,q)=>a+q.cuts.length,0)/2;
+    const kinds=new Set(runs.map(q=>`${q.axis}|${O.round(q.u1-q.u0,3)}|${q.cuts.map(u=>O.round(u-q.u0,3))}`)),g=grid();
+    // giunti: nodi interni toccati da tutte e due le direzioni; incrocio se entrambe passano, altrimenti T (o angolo)
+    let cross=0,tee=0;for(let a=1;a<=g.xs.length;a++)for(let b=1;b<=g.ys.length;b++){const vu=v.has(`${a-1}:${b-1}`),vd=v.has(`${a-1}:${b}`),hl=h.has(`${b-1}:${a-1}`),hr=h.has(`${b-1}:${a}`);if((vu||vd)&&(hl||hr)){if(vu&&vd&&hl&&hr)cross++;else tee++}}
     const lv=base.levels||1;
-    sum(`<b>${runs.length}</b> ${runs.length===1?'pezzo':'pezzi'} per cassetto (${kinds.size} ${kinds.size===1?'forma':'forme diverse'}), <b>${cuts}</b> ${cuts===1?'incrocio':'incroci'} a mezzo legno${lv>1?` · ${runs.length*lv} da stampare per ${lv} livelli`:''}.`)}
+    sum(`<b>${runs.length}</b> ${runs.length===1?'pezzo':'pezzi'} per cassetto (${kinds.size} ${kinds.size===1?'forma':'forme diverse'}), <b>${cross}</b> ${cross===1?'incrocio':'incroci'} e <b>${tee}</b> ${tee===1?'giunto':'giunti'} a T${lv>1?` · ${runs.length*lv} da stampare per ${lv} livelli`:''}.`)}
   catch(e){sum(e.message,true)}}
 
 function close(ok){document.documentElement.classList.remove('dv-open');const cb=done;done=null;if(ok&&cb)cb(layout())}
