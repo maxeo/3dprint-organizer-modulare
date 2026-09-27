@@ -1,7 +1,9 @@
 // Geometria parametrica del modulo: stesse quote dello script Blender (organizer_parametrico.py).
 (function(O){
 "use strict";
-const PRESETS={standard:[320,340,48,58],mezzo:[160,340,48,58],basso:[320,340,30,40],alto:[320,340,80,70],profondo:[320,450,48,58]};
+// Tutti i pezzi dei preset entrano in un piatto PRINT_BED x PRINT_BED mm.
+const PRINT_BED=230;
+const PRESETS={standard:[250,240,48,58],mezzo:[140,240,48,58],basso:[250,240,30,40],alto:[250,240,80,70],compatto:[200,200,48,58]};
 const numeric=['width_mm','depth_mm','tray_height_mm','clearance_above_mm','levels','groove_pitch_mm','groove_width_mm','groove_depth_mm','divider_thickness_mm','wall_mm','post_mm','side_clearance_mm','vertical_clearance_mm'];
 const round=(v,n=2)=>Number(v.toFixed(n));
 function validate(c){if(!Object.values(c).every(v=>typeof v!=='number'||Number.isFinite(v)))throw Error('Inserisci numeri validi in tutti i campi.');if(c.width_mm<=2*c.post_mm+60||c.depth_mm<=2*c.post_mm+80)throw Error('Larghezza o profondità insufficiente per telaio e cassetto.');if(c.tray_height_mm<20||c.clearance_above_mm<15||c.tray_height_mm+c.clearance_above_mm<65||c.wall_mm<2||c.wall_mm>=c.tray_height_mm/3)throw Error('Altezza, luce o passo insufficienti per le sedi del telaio.');if(!Number.isInteger(c.levels)||c.levels<1||c.levels>8)throw Error('I livelli devono essere tra 1 e 8.');if(c.groove_pitch_mm<10||c.groove_width_mm<=c.divider_thickness_mm||c.groove_depth_mm<0.4||c.groove_depth_mm>c.wall_mm-1.2)throw Error('Le scanalature non lasciano sufficiente materiale o gioco.');if(!['open','lane','grid'].includes(c.divider_mode))throw Error('Modalità divisori non valida.');return c}
@@ -80,5 +82,8 @@ function previewMesh(adds,subs){
   return tris;
 }
 
-Object.assign(O,{PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
+// Pezzi che non entrano nel piatto: le due misure maggiori devono stare in PRINT_BED
+// (il pezzo si appoggia sulla faccia più piccola; i montanti stanno in piedi).
+function oversize(parts,bed=PRINT_BED){return parts.map(p=>{const d=[0,2,4].map(k=>Math.max(...p.adds.map(b=>b[k+1]))-Math.min(...p.adds.map(b=>b[k]))).sort((a,b)=>a-b);return {id:p.id,name:p.name,dims:d}}).filter(p=>p.dims[1]>bed+1e-6||p.dims[2]>bed+1e-6)}
+Object.assign(O,{PRINT_BED,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
 })(window.OrganizerCfg=window.OrganizerCfg||{});

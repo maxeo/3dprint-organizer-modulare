@@ -3,7 +3,7 @@
 (function(O){
 "use strict";
 const KEY_DRAFT='organizer-config',KEY_APPLIED='organizer-config-applicata',KEY_LEVELS='organizer-mostra-livelli';
-const STANDARD={preset:'standard',divider_mode:'lane',width_mm:320,depth_mm:340,tray_height_mm:48,clearance_above_mm:58,levels:3,groove_pitch_mm:20,groove_width_mm:3,groove_depth_mm:1,divider_thickness_mm:2.4,wall_mm:3.2,post_mm:22,side_clearance_mm:0.5,vertical_clearance_mm:0.4};
+const STANDARD={preset:'standard',divider_mode:'lane',width_mm:250,depth_mm:240,tray_height_mm:48,clearance_above_mm:58,levels:3,groove_pitch_mm:20,groove_width_mm:3,groove_depth_mm:1,divider_thickness_mm:2.4,wall_mm:3.2,post_mm:22,side_clearance_mm:0.5,vertical_clearance_mm:0.4};
 
 function load(key){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v&&typeof v==='object'?{...STANDARD,...v}:null}catch(_){return null}}
 function save(key,c){try{c?localStorage.setItem(key,JSON.stringify(c)):localStorage.removeItem(key);return true}catch(_){return false}}

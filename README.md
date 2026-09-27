@@ -4,7 +4,7 @@ Base parametrica per un organizer autoreggente e impilabile. La pagina in `origi
 
 ## File
 
-- `Organizer_Modulare_Parametrico.blend`: scena Blender con tre livelli standard (320 × 340 mm, passo 106 mm) e script incorporato nel Text Editor.
+- `Organizer_Modulare_Parametrico.blend`: scena Blender con tre livelli standard (250 × 240 mm, passo 106 mm) e script incorporato nel Text Editor.
 - `organizer_parametrico.py`: sorgente dello stesso generatore, da eseguire in Blender.
 - `HANDOFF.md`: obiettivi, stato e prossimi passi.
 
@@ -15,13 +15,13 @@ In Blender apri il Text Editor, seleziona `organizer_parametrico.py`, modifica l
 Esempio:
 
 ```python
-CONFIG = make_config("mezzo", width_mm=170, depth_mm=360,
+CONFIG = make_config("mezzo", width_mm=170, depth_mm=220,
                      tray_height_mm=55, clearance_above_mm=60,
                      levels=2, divider_mode="grid",
                      drawer_open_fraction=0.25)
 ```
 
-Preset disponibili: `standard`, `mezzo`, `basso`, `alto`, `profondo`. Divisori: `open`, `lane`, `grid`. Si possono modificare anche `wall_mm`, `side_clearance_mm`, `vertical_clearance_mm`, `post_mm`, `joint_mm` e `joint_clearance_mm`. Il secondo cassetto è quello mostrato estratto; se c'è un solo livello, si estrae il primo.
+Preset disponibili: `standard`, `mezzo`, `basso`, `alto`, `compatto` (200 × 200). Tutti i preset hanno ogni pezzo entro un piatto 230 × 230 mm (`PRINT_BED_MM`); l’export Blender e il pannello Configura avvisano se un pezzo lo supera. Divisori: `open`, `lane`, `grid`. Si possono modificare anche `wall_mm`, `side_clearance_mm`, `vertical_clearance_mm`, `post_mm`, `joint_mm` e `joint_clearance_mm`. Il secondo cassetto è quello mostrato estratto; se c'è un solo livello, si estrae il primo.
 
 Il modello distingue telaio, guide, cassetti e divisori in collezioni. La struttura standard misura 318 mm di altezza, più 6 mm di tenoni superiori. Le sedi sono 0,35 mm più larghe del tenone per lato.
 
@@ -35,13 +35,13 @@ Questa è una base geometrica per sviluppare le varianti. I traversi hanno tenon
 
 Per rigenerare gli STL dopo una modifica a `CONFIG`, decommenta la riga `export_first_level_stls(...)` in fondo allo script e premi Alt+P. Il formato è millimetri, con Z=0 sul piano di stampa. La guida offline è `guida.html`; la sua sorgente è `dati/guida_spec.json`.
 
-**Stato:** STL preliminari. Cassetto 275 × 324,8 mm circa compresa la presa frontale, longheroni fino a 312 mm: verifica che entrino nel tuo piano di stampa. I giunti sono modellati ma non ancora calibrati con una stampa; non attribuire una portata alla torre senza prova fisica.
+**Stato:** STL preliminari. Lo standard è pensato per un piatto 230 × 230 mm: cassetto 205 × 224,9 mm compresa la presa frontale, traverse 222 mm, longheroni 212 mm, montanti 22 × 22 × 112 mm da stampare in piedi. I giunti sono modellati ma non ancora calibrati con una stampa; non attribuire una portata alla torre senza prova fisica.
 
 La presa del cassetto è una mezza C integrata nella parete frontale: il guscio esterno curva fino a circa 15 mm di sporgenza e sfuma ai lati. La tasca è aperta fino al bordo superiore e attraversa la parete verso l'interno del cassetto, così si possono infilare le dita. Il guscio resta unito sotto e ai lati. Anche questa zona richiede un provino per verificarne comodità e resistenza.
 
 ## Scanalature modulari
 
-Il cassetto ha sedi verticali su tutti e quattro i lati, a passo 20 mm. Nello standard ci sono 13 posizioni per ciascun lato, larghe 3,0 mm e profonde 1,0 mm: resta una parete esterna di 2,2 mm. Il divisorio longitudinale è spesso 2,4 mm, entra nelle sedi alle estremità e ha intagli superiori ripetuti per traversi opzionali. In modalità `grid` tre traversi si montano a −80, 0 e +80 mm con intaglio inferiore a mezzo spessore. Verificare il gioco reale con un provino prima della stampa completa.
+Il cassetto ha sedi verticali su tutti e quattro i lati, a passo 20 mm. Nello standard ci sono 9 posizioni per ciascun lato, larghe 3,0 mm e profonde 1,0 mm: resta una parete esterna di 2,2 mm. Il divisorio longitudinale è spesso 2,4 mm, entra nelle sedi alle estremità e ha intagli superiori ripetuti per traversi opzionali. In modalità `grid` tre traversi si montano a −60, 0 e +60 mm con intaglio inferiore a mezzo spessore. Verificare il gioco reale con un provino prima della stampa completa.
 
 ## Guida interattiva e generazione senza Blender
 

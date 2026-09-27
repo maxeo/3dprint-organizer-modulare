@@ -12,7 +12,7 @@
     "intro_html": "<b>I traversi si agganciano ai montanti con un tenone a L:</b> entrano sollevati e scendono di 1,5 mm. Longherone basso, guida e fermo sono un pezzo unico per lato. Il cassetto ha una presa cava a mezza C, continua con il frontale e aperta verso l’interno. Questa guida mostra un modulo standard da ripetere tre volte. Per misure diverse usa il pulsante <a href=\"#configura\">Configura</a>: l’anteprima si rigenera con le tue misure.",
     "facts": [
       {
-        "value": "320 × 340 mm",
+        "value": "250 × 240 mm",
         "label": "impronta esterna"
       },
       {
@@ -20,7 +20,7 @@
         "label": "passo per livello"
       },
       {
-        "value": "13 + 13",
+        "value": "9 + 9",
         "label": "sedi per lato"
       },
       {
@@ -61,12 +61,12 @@
       "print": "vassoio",
       "assembled_bounds": [
         [
-          -137.5,
-          137.5
+          -102.5,
+          102.5
         ],
         [
-          -172.8611,
-          152
+          -122.8611,
+          102
         ],
         [
           11,
@@ -89,8 +89,8 @@
           1.2
         ],
         [
-          -155.6,
-          149.6
+          -105.6,
+          99.6
         ],
         [
           14.2,
@@ -109,12 +109,12 @@
       "print": "struttura",
       "assembled_bounds": [
         [
-          144,
-          154
+          109,
+          119
         ],
         [
-          -156,
-          156
+          -106,
+          106
         ],
         [
           91,
@@ -133,12 +133,12 @@
       "print": "struttura",
       "assembled_bounds": [
         [
-          -154,
-          -144
+          -119,
+          -109
         ],
         [
-          -156,
-          156
+          -106,
+          106
         ],
         [
           91,
@@ -157,12 +157,12 @@
       "print": "guide",
       "assembled_bounds": [
         [
-          133,
-          154
+          98,
+          119
         ],
         [
-          -156,
-          156
+          -106,
+          106
         ],
         [
           6.5,
@@ -181,12 +181,12 @@
       "print": "guide",
       "assembled_bounds": [
         [
-          -154,
-          -133
+          -119,
+          -98
         ],
         [
-          -156,
-          156
+          -106,
+          106
         ],
         [
           6.5,
@@ -205,12 +205,12 @@
       "print": "struttura",
       "assembled_bounds": [
         [
-          138,
-          160
+          103,
+          125
         ],
         [
-          -170,
-          -148
+          -120,
+          -98
         ],
         [
           0,
@@ -229,12 +229,12 @@
       "print": "struttura",
       "assembled_bounds": [
         [
-          138,
-          160
+          103,
+          125
         ],
         [
-          148,
-          170
+          98,
+          120
         ],
         [
           0,
@@ -253,12 +253,12 @@
       "print": "struttura",
       "assembled_bounds": [
         [
-          -160,
-          -138
+          -125,
+          -103
         ],
         [
-          -170,
-          -148
+          -120,
+          -98
         ],
         [
           0,
@@ -277,12 +277,12 @@
       "print": "struttura",
       "assembled_bounds": [
         [
-          -160,
-          -138
+          -125,
+          -103
         ],
         [
-          148,
-          170
+          98,
+          120
         ],
         [
           0,
@@ -301,12 +301,12 @@
       "print": "struttura",
       "assembled_bounds": [
         [
-          -146,
-          146
+          -111,
+          111
         ],
         [
-          154,
-          164
+          104,
+          114
         ],
         [
           80,
@@ -325,12 +325,12 @@
       "print": "struttura",
       "assembled_bounds": [
         [
-          -146,
-          146
+          -111,
+          111
         ],
         [
-          154,
-          164
+          104,
+          114
         ],
         [
           18,
@@ -343,7 +343,7 @@
     "eyebrow": "01 / Montaggio geometrico",
     "h2": "Assembla un modulo, poi ripeti.",
     "intro_html": "Le posizioni sono ricavate dagli STL. I giunti sono modellati ma i giochi e il comportamento sotto carico vanno provati fisicamente.",
-    "start_html": "<h3>Prima della stampa</h3><p>Controlla il volume del piatto: cassetto 275 × 325 mm circa compresa la presa, longheroni fino a 312 mm. Stampa un provino del tenone a L (6 × 5 × 8 mm, dente 1,5 mm) e delle scanalature.</p>"
+    "start_html": "<h3>Prima della stampa</h3><p>Controlla il volume del piatto: ogni pezzo entra in un piatto 230 × 230 mm: cassetto 205 × 225 mm compresa la presa, traverse 222 mm, longheroni 212 mm. Stampa un provino del tenone a L (6 × 5 × 8 mm, dente 1,5 mm) e delle scanalature.</p>"
   },
   "steps": [
     {
@@ -445,7 +445,7 @@
     },
     {
       "title": "Scegli la sede del divisorio",
-      "short": "13 posizioni per lato",
+      "short": "9 posizioni per lato",
       "text": "Inserisci il divisorio nelle sedi contrapposte del cassetto. Gli intagli superiori accolgono traversi opzionali.",
       "parts": [
         "P02"
@@ -599,7 +599,7 @@
             "fondo sul piatto"
           ]
         ],
-        "why": "Il fondo e le pareti sostengono il contenuto; verificare che 275 × 310 mm entrino nel piatto.",
+        "why": "Il fondo e le pareti sostengono il contenuto; con la presa misura 205 × 225 mm, entro un piatto 230 × 230.",
         "summary": "5 pareti · 20% · fondo sul piatto"
       },
       {
@@ -640,7 +640,7 @@
       },
       {
         "title": "Piano di stampa",
-        "html": "<p>Il cassetto misura 275 × 324,8 mm circa con la presa curva; il longherone più lungo misura 312 mm. Se il piano è più piccolo, ridimensiona dal <a href=\"#configura\">configuratore</a> o progetta una divisione dei pezzi.</p>"
+        "html": "<p>Lo standard è dimensionato per un piatto <b>230 × 230 mm</b>, il più comune: cassetto 205 × 224,9 mm con la presa, traverse posteriori 222 mm, longheroni 212 mm, montanti 22 × 22 × 112 mm in piedi. Se aumenti le misure, il pannello segnala i pezzi che non entrano più; ridimensiona dal <a href=\"#configura\">configuratore</a> o progetta una divisione dei pezzi.</p>"
       },
       {
         "title": "Presa cava a mezza C",

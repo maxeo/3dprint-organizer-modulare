@@ -13,13 +13,15 @@ from mathutils import Vector
 
 MM = 0.001
 ROOT_NAME = "Organizer_Generato"
+PRINT_BED_MM = 230
 
 PRESETS = {
-    "standard": dict(width_mm=320, depth_mm=340, tray_height_mm=48, clearance_above_mm=58),
-    "mezzo": dict(width_mm=160, depth_mm=340, tray_height_mm=48, clearance_above_mm=58),
-    "basso": dict(width_mm=320, depth_mm=340, tray_height_mm=30, clearance_above_mm=40),
-    "alto": dict(width_mm=320, depth_mm=340, tray_height_mm=80, clearance_above_mm=70),
-    "profondo": dict(width_mm=320, depth_mm=450, tray_height_mm=48, clearance_above_mm=58),
+    # Tutti i pezzi entrano in un piatto 230 x 230 mm (PRINT_BED_MM).
+    "standard": dict(width_mm=250, depth_mm=240, tray_height_mm=48, clearance_above_mm=58),
+    "mezzo": dict(width_mm=140, depth_mm=240, tray_height_mm=48, clearance_above_mm=58),
+    "basso": dict(width_mm=250, depth_mm=240, tray_height_mm=30, clearance_above_mm=40),
+    "alto": dict(width_mm=250, depth_mm=240, tray_height_mm=80, clearance_above_mm=70),
+    "compatto": dict(width_mm=200, depth_mm=200, tray_height_mm=48, clearance_above_mm=58),
 }
 
 
@@ -559,11 +561,17 @@ def export_first_level_stls(output_dir, copies=3):
         finally:
             ev.to_mesh_clear()
     manifest = dict(
-        note="Tenoni con gancio a L e sedi cieche; longherone basso, guida e fermo in un unico pezzo; maniglia integrata. Verificare giochi e carico con provini.",
+        note="Tenoni con gancio a L e sedi cieche; longherone basso, guida e fermo in un unico pezzo; maniglia integrata. Pezzi entro un piatto 230 x 230 mm. Verificare giochi e carico con provini.",
+        print_bed_mm=PRINT_BED_MM,
         unit="mm", source_blend=bpy.data.filepath, parts=records,
     )
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
     print("Esportati", len(records), "STL in", out)
+    # Le due misure maggiori devono stare nel piatto (il pezzo poggia sulla faccia minore).
+    for r in records:
+        big = sorted(r["dimensions_mm"])[1:]
+        if max(big) > PRINT_BED_MM:
+            print(f"ATTENZIONE: {r['id']} {r['name']} {big[1]:.1f} x {big[0]:.1f} mm supera il piatto {PRINT_BED_MM} mm")
     return manifest
 
 

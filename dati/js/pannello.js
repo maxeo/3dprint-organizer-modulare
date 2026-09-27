@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id);
 const fmt=v=>v.toLocaleString('it-IT',{maximumFractionDigits:2});
 const round=O.round;
 const PRESET_KEYS=['width_mm','depth_mm','tray_height_mm','clearance_above_mm'];
-const PRESET_NAMES={standard:'Standard',mezzo:'Mezza larghezza',basso:'Basso',alto:'Alto',profondo:'Profondo',custom:'Personalizzata'};
+const PRESET_NAMES={standard:'Standard',mezzo:'Mezza larghezza',basso:'Basso',alto:'Alto',compatto:'Compatto',custom:'Personalizzata'};
 // [chiave, etichetta, min, max, passo]
 const SECTIONS=[
   ['Misure del modulo',[['width_mm','Larghezza esterna',105,1200,0.1],['depth_mm','Profondità esterna',125,1200,0.1],['tray_height_mm','Altezza cassetto',20,300,0.1],['clearance_above_mm','Luce sopra il cassetto',15,300,0.1],['levels','Livelli / copie',1,8,1]]],
@@ -71,7 +71,10 @@ function planSvg(c){const w=c.width_mm,d=c.depth_mm,post=c.post_mm,tw=w-2*post-2
   return svg.replace('<rect','<g transform="scale(1,-1)"><rect')+`</g><text x="0" y="${r(d/2+22)}" text-anchor="middle" font-size="11" fill="#50665b">FRONTE / ESTRAZIONE ↓</text></svg>`}
 
 function render(){let c;try{c=O.validate(readForm())}catch(e){status(e.message,'err');$('cfg_apply').disabled=$('cfg_zip').disabled=true;return}
-  $('cfg_apply').disabled=$('cfg_zip').disabled=false;status(O.applied&&JSON.stringify(c)===JSON.stringify({...O.applied,preset:c.preset})?'Questa configurazione è già applicata all’anteprima.':'');
+  $('cfg_apply').disabled=$('cfg_zip').disabled=false;
+  const big=O.oversize(O.partsForConfig(c));
+  if(big.length)status(`Oltre il piatto ${O.PRINT_BED} × ${O.PRINT_BED} mm: ${big.map(b=>`${b.id} ${b.name.replace(/_L1$/,'').replace(/_/g,' ')} (${fmt(round(b.dims[2]))} × ${fmt(round(b.dims[1]))})`).join(', ')}.`,'err');
+  else status(O.applied&&JSON.stringify(c)===JSON.stringify({...O.applied,preset:c.preset})?'Questa configurazione è già applicata all’anteprima.':`Tutti i pezzi entrano in un piatto ${O.PRINT_BED} × ${O.PRINT_BED} mm.`);
   const pitch=c.tray_height_mm+c.clearance_above_mm,tw=c.width_mm-2*c.post_mm-2*c.side_clearance_mm,td=c.depth_mm-c.post_mm-8;
   $('cfg_plan').innerHTML=planSvg(c);$('cfg_f_pitch').textContent=fmt(pitch);$('cfg_f_tray').textContent=`${fmt(round(tw))} × ${fmt(round(td))}`;
   $('cfg_f_grooves').textContent=`${O.slots(tw-2*c.wall_mm,c.groove_pitch_mm).length} + ${O.slots(td-2*c.wall_mm,c.groove_pitch_mm).length}`;$('cfg_f_total').textContent=fmt(pitch*c.levels);
