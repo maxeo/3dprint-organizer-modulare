@@ -31,7 +31,8 @@ def make_config(preset="standard", **overrides):
     cfg = dict(PRESETS[preset])
     cfg.update(dict(
         preset=preset, levels=3, drawer_open_fraction=0.0,
-        divider_mode="lane", wall_mm=3.2, divider_thickness_mm=2.4,
+        divider_mode="modulare", dividers_long=1, dividers_cross=0,
+        divider_layout=None, wall_mm=3.2, divider_thickness_mm=2.4,
         groove_pitch_mm=20.0, groove_width_mm=3.0, groove_depth_mm=1.0,
         side_clearance_mm=0.5, vertical_clearance_mm=0.4,
         post_mm=22.0, joint_mm=8.0, joint_clearance_mm=0.35,
@@ -59,12 +60,13 @@ def validate(c):
         raise ValueError("Ruote: 0, 4, 6, 8 oppure 10")
     if wheel_count(c):
         wheel_ys(c)
-    if c["divider_mode"] not in ("open", "lane", "grid"):
-        raise ValueError("divider_mode: open, lane oppure grid")
+    if c["divider_mode"] not in ("modulare", "disegno", "open", "lane", "grid"):
+        raise ValueError("divider_mode: modulare, disegno (oppure i vecchi open, lane, grid)")
     if c["groove_pitch_mm"] < 10 or c["groove_width_mm"] <= c["divider_thickness_mm"]:
         raise ValueError("Passo o larghezza delle scanalature non validi")
     if not 0.4 <= c["groove_depth_mm"] <= wall - 1.2:
         raise ValueError("La scanalatura lascerebbe una parete esterna troppo sottile")
+    divider_runs(c, *tray_size(c))
 
 
 # Ruote (0, 4, 6, 8 o 10; standard 4) sotto il cassetto, su perno 3,42 (accoppiamento tarato con i perni
@@ -500,39 +502,123 @@ def cut_tray_grooves(tray, c, cx, cy, z, tw, td, col):
     return xs, ys
 
 
-def make_dividers(c, cx, cy, z, tw, td, col, mat):
+# Divisori. 'modulare': dividers_long longitudinali (fronte-fondo) e dividers_cross trasversali (sponda-sponda),
+# distribuiti sulle sedi; ogni pezzo ha un intaglio a ogni sede, quindi si sposta e si incrocia liberamente.
+# 'disegno': divider_layout = {"v": ["i:k", ...], "h": ["j:k", ...]}, tratti fra sedi vicine (lo schema del modale della
+# guida): v "i:k" e' il longitudinale sulla sede xs[i] fra i nodi yn[k] e yn[k+1], h "j:k" il trasversale sulla sede
+# ys[j] fra xn[k] e xn[k+1]; pezzi su misura con intagli solo agli incroci. Intagli a mezzo legno da un lato solo:
+# longitudinali da sopra, trasversali da sotto. Vecchie modalita': open = 0+0, lane = 1+0, grid = 1+3.
+LEGACY_DIVIDERS = {"open": (0, 0), "lane": (1, 0), "grid": (1, 3)}
+
+
+def tray_size(c):
+    return (c["width_mm"] - 2 * c["post_mm"] - 2 * c["side_clearance_mm"],
+            c["depth_mm"] - c["post_mm"] - 8)
+
+
+def spread_on(slots, n, span, what):
+    out = []
+    for i in range(1, n + 1):
+        target = -span / 2 + span * i / (n + 1)
+        free = sorted((v for v in slots if v not in out), key=lambda v: abs(v - target))
+        if not free:
+            raise ValueError(f"Ci sono solo {len(slots)} sedi per i divisori {what}")
+        out.append(free[0])
+    return sorted(out)
+
+
+def divider_runs(c, tw, td):
+    wall, gd, t = c["wall_mm"], c["groove_depth_mm"], c["divider_thickness_mm"] / 2
+    xs = slot_positions(tw - 2 * wall, c["groove_pitch_mm"])
+    ys = slot_positions(td - 2 * wall, c["groove_pitch_mm"])
+    xn = [-(tw / 2 - wall)] + xs + [tw / 2 - wall]
+    yn = [-(td / 2 - wall)] + ys + [td / 2 - wall]
     mode = c["divider_mode"]
-    if mode == "open":
-        return
+    v, h = set(), set()
+    if mode == "disegno":
+        layout = c.get("divider_layout") or {}
+        for e in layout.get("v", []):
+            i, k = map(int, e.split(":"))
+            if 0 <= i < len(xs) and 0 <= k < len(yn) - 1:
+                v.add((i, k))
+        for e in layout.get("h", []):
+            j, k = map(int, e.split(":"))
+            if 0 <= j < len(ys) and 0 <= k < len(xn) - 1:
+                h.add((j, k))
+    else:
+        n_long, n_cross = LEGACY_DIVIDERS.get(mode, (int(round(c.get("dividers_long", 0))),
+                                                     int(round(c.get("dividers_cross", 0)))))
+        for x in spread_on(xs, max(0, n_long), tw - 2 * wall, "longitudinali"):
+            v.update((xs.index(x), k) for k in range(len(yn) - 1))
+        for y in spread_on(ys, max(0, n_cross), td - 2 * wall, "trasversali"):
+            h.update((ys.index(y), k) for k in range(len(xn) - 1))
+
+    def v_at(a, b):
+        return ((a - 1, b - 1) in v, (a - 1, b) in v)
+
+    def h_at(a, b):
+        return ((b - 1, a - 1) in h, (b - 1, a) in h)
+
+    runs = []
+    for axis, edges, lines, nodes in (("v", v, xs, yn), ("h", h, ys, xn)):
+        for i in range(len(lines)):
+            for k in range(len(nodes) - 1):
+                if (i, k) not in edges or (k > 0 and (i, k - 1) in edges):
+                    continue
+                e = k + 1
+                while e < len(nodes) - 1 and (i, e) in edges:
+                    e += 1
+
+                def other(n):
+                    return h_at(i + 1, n) if axis == "v" else v_at(n, i + 1)
+
+                def end(n, sg):
+                    # parete: dentro la sua sede; contro un pezzo che passa: sulla sua faccia; angolo o libero: bordo del
+                    # nodo (negli angoli il nodo va al longitudinale)
+                    if n in (0, len(nodes) - 1):
+                        return nodes[n] + sg * (gd - 0.2)
+                    o = other(n)
+                    if (o[0] and o[1]) or (axis == "h" and (o[0] or o[1])):
+                        return nodes[n] - sg * t
+                    return nodes[n] + sg * t
+
+                cuts = [nodes[n] for n in range(k + 1, e) if mode != "disegno" or all(other(n))]
+                runs.append(dict(axis=axis, line=lines[i], u0=end(k, -1), u1=end(e, 1), cuts=cuts))
+    return runs
+
+
+def make_dividers(c, cx, cy, z, tw, td, col, mat):
     wall = c["wall_mm"]
     h = min(30, c["tray_height_mm"] - wall - 4)
     thick = c["divider_thickness_mm"]
-    groove = c["groove_depth_mm"]
     slot_width = c["groove_width_mm"]
-    pitch = c["groove_pitch_mm"]
     floor = z + wall
-    longitudinal = box("Divisorio_longitudinale", (cx, cy, floor + h / 2),
-                       (thick, td - 2 * wall + 2 * groove - 0.4, h), col, mat)
-    yslots = slot_positions(td - 2 * wall, pitch)
-    notches = [(cx, cy+y, floor + 3*h/4, thick+1, slot_width, h/2+0.1)
-               for y in yslots]
-    apply_boolean(longitudinal,
-                  multi_box_cutter("_intagli_divisorio_lungo", notches, col),
-                  "DIFFERENCE")
-    longitudinal["intagli_trasversali"] = len(yslots)
-    if mode == "grid":
-        target = (td - 2 * wall) / 4
-        selected = [min(yslots, key=lambda y: abs(y - wanted))
-                    for wanted in (-target, 0, target)]
-        for i, y in enumerate(dict.fromkeys(selected), 1):
-            cross = box(f"Divisorio_trasversale_{i}",
-                        (cx, cy+y, floor + h/2),
-                        (tw - 2*wall + 2*groove - 0.4, thick, h), col, mat)
-            notch = multi_box_cutter("_intaglio_divisorio_traverso",
-                                     [(cx, cy+y, floor+h/4,
-                                       slot_width, thick+1, h/2+0.1)], col)
-            apply_boolean(cross, notch, "DIFFERENCE")
-            cross["posizione_sede_mm"] = y
+    # un pezzo per forma: le copie uguali hanno "copia" (fuori dall'export) e tutte portano la quantita'
+    types = {}
+    for r in divider_runs(c, tw, td):
+        key = (r["axis"], round(r["u1"] - r["u0"], 3), tuple(round(u - r["u0"], 3) for u in r["cuts"]))
+        types.setdefault(key, []).append(r)
+    for axis, base in (("v", "Divisorio_longitudinale"), ("h", "Divisorio_trasversale")):
+        kinds = [runs for key, runs in types.items() if key[0] == axis]
+        for n, runs in enumerate(kinds, 1):
+            name = f"{base}_{n}" if len(kinds) > 1 else base
+            for k, r in enumerate(runs, 1):
+                u0, u1, L, mid = r["u0"], r["u1"], r["line"], (r["u0"] + r["u1"]) / 2
+                if axis == "v":
+                    ob = box(name if k == 1 else f"{name}_copia", (cx + L, cy + mid, floor + h / 2),
+                             (thick, u1 - u0, h), col, mat)
+                    notches = [(cx + L, cy + u, floor + 3 * h / 4, thick + 1, slot_width, h / 2 + 0.1) for u in r["cuts"]]
+                else:
+                    ob = box(name if k == 1 else f"{name}_copia", (cx + mid, cy + L, floor + h / 2),
+                             (u1 - u0, thick, h), col, mat)
+                    notches = [(cx + u, cy + L, floor + h / 4, slot_width, thick + 1, h / 2 + 0.1) for u in r["cuts"]]
+                if notches:
+                    apply_boolean(ob, multi_box_cutter("_intagli_divisorio", notches, col), "DIFFERENCE")
+                ob["intagli"] = len(notches)
+                ob["posizione_sede_mm"] = L
+                ob["quantita"] = len(runs)
+                if k > 1:
+                    ob["copia"] = True
 
 
 def build_organizer(c):
@@ -698,7 +784,7 @@ def export_first_level_stls(output_dir, copies=3):
 
 
 # Cambiare questa riga per creare nuove tipologie e misure.
-CONFIG = make_config("standard", levels=3, divider_mode="lane", drawer_open_fraction=0.32)
+CONFIG = make_config("standard", levels=3, drawer_open_fraction=0.32)
 build_organizer(CONFIG)
 # Per aggiornare gli STL dopo una modifica a CONFIG, decommentare la riga seguente
 # e usare Alt+P nel Text Editor. Gli STL esistenti con lo stesso nome saranno aggiornati.

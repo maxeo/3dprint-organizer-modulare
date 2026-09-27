@@ -6,7 +6,7 @@ const PRINT_BED={x:230,y:230,z:250};
 const PRESETS={standard:[250,240,48,58],mezzo:[140,240,48,58],basso:[250,240,30,40],alto:[250,240,80,70],compatto:[200,200,48,58]};
 const numeric=['width_mm','depth_mm','tray_height_mm','clearance_above_mm','levels','groove_pitch_mm','groove_width_mm','groove_depth_mm','divider_thickness_mm','wall_mm','post_mm','side_clearance_mm','vertical_clearance_mm'];
 const round=(v,n=2)=>Number(v.toFixed(n));
-function validate(c){if(!Object.values(c).every(v=>typeof v!=='number'||Number.isFinite(v)))throw Error('Inserisci numeri validi in tutti i campi.');if(c.width_mm<=2*c.post_mm+60||c.depth_mm<=2*c.post_mm+80)throw Error('Larghezza o profondità insufficiente per telaio e cassetto.');if(c.tray_height_mm<20||c.clearance_above_mm<15||c.tray_height_mm+c.clearance_above_mm<65||c.wall_mm<2||c.wall_mm>=c.tray_height_mm/3)throw Error('Altezza, luce o passo insufficienti per le sedi del telaio.');if(!Number.isInteger(c.levels)||c.levels<1||c.levels>8)throw Error('I livelli devono essere tra 1 e 8.');if(c.groove_pitch_mm<10||c.groove_width_mm<=c.divider_thickness_mm||c.groove_depth_mm<0.4||c.groove_depth_mm>c.wall_mm-1.2)throw Error('Le scanalature non lasciano sufficiente materiale o gioco.');if(!['open','lane','grid'].includes(c.divider_mode))throw Error('Modalità divisori non valida.');if(!WHEEL_COUNTS.includes(wheelCount(c)))throw Error('Ruote: 0, 4, 6, 8 oppure 10.');if(wheelCount(c))wheelYs(c);return c}
+function validate(c){if(!Object.values(c).every(v=>typeof v!=='number'||Number.isFinite(v)))throw Error('Inserisci numeri validi in tutti i campi.');if(c.width_mm<=2*c.post_mm+60||c.depth_mm<=2*c.post_mm+80)throw Error('Larghezza o profondità insufficiente per telaio e cassetto.');if(c.tray_height_mm<20||c.clearance_above_mm<15||c.tray_height_mm+c.clearance_above_mm<65||c.wall_mm<2||c.wall_mm>=c.tray_height_mm/3)throw Error('Altezza, luce o passo insufficienti per le sedi del telaio.');if(!Number.isInteger(c.levels)||c.levels<1||c.levels>8)throw Error('I livelli devono essere tra 1 e 8.');if(c.groove_pitch_mm<10||c.groove_width_mm<=c.divider_thickness_mm||c.groove_depth_mm<0.4||c.groove_depth_mm>c.wall_mm-1.2)throw Error('Le scanalature non lasciano sufficiente materiale o gioco.');dividerRuns(c);if(!WHEEL_COUNTS.includes(wheelCount(c)))throw Error('Ruote: 0, 4, 6, 8 oppure 10.');if(wheelCount(c))wheelYs(c);return c}
 // Ruote opzionali: due per lato sotto il cassetto, su perno Ø3,42 (accoppiamento tarato con i perni Sakura in sedi da 3,4).
 // La ruota sporge DROP sotto il fondo e corre sulla mensola della guida, abbassata di conseguenza: il cassetto resta alla
 // stessa quota e il modulo non cresce. Sedi del perno quadrate da 3,4 (stampabili in orizzontale, tengono il perno sulle facce).
@@ -48,6 +48,48 @@ function part(name,group,adds,subs=[],late=[],lateSubs=[]){return {name,group,ad
 // Gancio a L: dente HOOK x HOOK_LEN in punta al tenone; sede alta 5,7+HOOK con tasca sul fondo.
 const HOOK=1.5,HOOK_LEN=3,LOW_RAIL=12.5;
 function mortiseL(axis,cx,cy,inward,z){const off=inward*(8.5/2-(HOOK_LEN+0.7)/2),pz=z-2.85-HOOK/2+0.05;return axis==='Y'?[centered(cx,cy,z+HOOK/2,6.7,8.5,5.7+HOOK),centered(cx,cy+off,pz,6.7,HOOK_LEN+0.7,HOOK+0.1)]:[centered(cx,cy,z+HOOK/2,8.5,6.7,5.7+HOOK),centered(cx+off,cy,pz,HOOK_LEN+0.7,6.7,HOOK+0.1)]}
+// ---------------- divisori ----------------
+// Due modalità. 'modulare': quanti longitudinali (fronte-fondo) e quanti trasversali (sponda-sponda), distribuiti sulle
+// sedi; ogni pezzo ha un intaglio a ogni sede, quindi si sposta e si incrocia liberamente. 'disegno': schema fatto nel
+// modale (tratti fra sedi vicine); pezzi su misura con intagli solo agli incroci. Intagli a mezzo legno, da un lato solo:
+// longitudinali da sopra, trasversali da sotto. Le vecchie modalità open/lane/grid valgono 0+0, 1+0, 1+3.
+const LEGACY_DIV={open:[0,0],lane:[1,0],grid:[1,3]};
+function dividerSpec(c){const l=LEGACY_DIV[c.divider_mode];
+  if(l)return {mode:'modulare',long:l[0],cross:l[1]};
+  if(c.divider_mode==='disegno'){const L=c.divider_layout||{};return {mode:'disegno',v:[...(L.v||[])].sort(),h:[...(L.h||[])].sort()}}
+  return {mode:'modulare',long:Math.max(0,Math.round(+c.dividers_long||0)),cross:Math.max(0,Math.round(+c.dividers_cross||0))}}
+// Sedi (xs, ys: dal centro del cassetto) e nodi della griglia (xn, yn: pareti interne + sedi).
+function dividerGrid(c){const tw=c.width_mm-2*c.post_mm-2*c.side_clearance_mm,td=c.depth_mm-c.post_mm-8,wall=c.wall_mm,
+  xs=slots(tw-2*wall,c.groove_pitch_mm),ys=slots(td-2*wall,c.groove_pitch_mm);
+  return {tw,td,wall,xs,ys,xn:[-(tw/2-wall),...xs,tw/2-wall],yn:[-(td/2-wall),...ys,td/2-wall]}}
+// n sedi il più vicino possibile a una distribuzione uniforme (con 1 pezzo: quella centrale).
+function spreadOn(sl,n,span,what){const out=[];
+  for(let i=1;i<=n;i++){const t=-span/2+span*i/(n+1),best=sl.filter(v=>!out.includes(v)).sort((a,b)=>Math.abs(a-t)-Math.abs(b-t))[0];
+    if(best===undefined)throw Error(`Ci sono solo ${sl.length} sedi per i divisori ${what}.`);out.push(best)}
+  return out.sort((a,b)=>a-b)}
+// Tratti accesi: v 'i:k' = longitudinale sulla sede xs[i], fra yn[k] e yn[k+1]; h 'j:k' = trasversale sulla sede ys[j],
+// fra xn[k] e xn[k+1]. Lo usa anche il modale (divisori.js) per partire dai numeri.
+function layoutEdges(c){const g=dividerGrid(c),sp=dividerSpec(c),v=new Set(),h=new Set();
+  if(sp.mode==='modulare'){
+    for(const x of spreadOn(g.xs,sp.long,g.tw-2*g.wall,'longitudinali')){const i=g.xs.indexOf(x);for(let k=0;k<g.yn.length-1;k++)v.add(`${i}:${k}`)}
+    for(const y of spreadOn(g.ys,sp.cross,g.td-2*g.wall,'trasversali')){const j=g.ys.indexOf(y);for(let k=0;k<g.xn.length-1;k++)h.add(`${j}:${k}`)}}
+  else{const ok=(e,a,b)=>{const [i,k]=e.split(':').map(Number);return Number.isInteger(i)&&Number.isInteger(k)&&i>=0&&k>=0&&i<a&&k<b};
+    for(const e of sp.v)if(ok(e,g.xs.length,g.yn.length-1))v.add(e);for(const e of sp.h)if(ok(e,g.ys.length,g.xn.length-1))h.add(e)}
+  return {g,sp,v,h}}
+// Pezzi: tratti consecutivi sulla stessa sede. u0/u1: estremi lungo il pezzo (dal centro del cassetto); cuts: posizioni
+// degli intagli. Estremi: in una parete entra nella sua sede; contro un pezzo che passa si ferma sulla sua faccia; in un
+// angolo o libero arriva fino al bordo del nodo (negli angoli il nodo va al longitudinale).
+function dividerRuns(c){const {g,sp,v,h}=layoutEdges(c),gd=c.groove_depth_mm,t=c.divider_thickness_mm/2,runs=[];
+  // tratti che toccano il nodo (a indice in xn, b indice in yn)
+  const vAt=(a,b)=>[v.has(`${a-1}:${b-1}`),v.has(`${a-1}:${b}`)],hAt=(a,b)=>[h.has(`${b-1}:${a-1}`),h.has(`${b-1}:${a}`)];
+  const scan=(set,lines,nodes,axis)=>{for(let i=0;i<lines.length;i++)for(let k=0;k<nodes.length-1;k++){
+    if(!set.has(`${i}:${k}`)||(k>0&&set.has(`${i}:${k-1}`)))continue;let e=k+1;while(e<nodes.length-1&&set.has(`${i}:${e}`))e++;
+    const other=n=>axis==='v'?hAt(i+1,n):vAt(n,i+1),end=(n,sg)=>{if(n===0||n===nodes.length-1)return nodes[n]+sg*(gd-0.2);
+      const o=other(n);return (o[0]&&o[1])||(axis==='h'&&(o[0]||o[1]))?nodes[n]-sg*t:nodes[n]+sg*t};
+    const cuts=[];for(let n=k+1;n<e;n++){const o=other(n);if(sp.mode==='modulare'||(o[0]&&o[1]))cuts.push(nodes[n])}
+    runs.push({axis,line:lines[i],u0:end(k,-1),u1:end(e,1),cuts})}};
+  scan(v,g.xs,g.yn,'v');scan(h,g.ys,g.xn,'h');
+  return runs}
 function partsForConfig(c){validate(c);const p=[];const w=c.width_mm,d=c.depth_mm,post=c.post_mm,wall=c.wall_mm,h=c.tray_height_mm,pitch=h+c.clearance_above_mm,side=c.side_clearance_mm,vertical=c.vertical_clearance_mm,tw=w-2*post-2*side,td=d-post-8,cy=-3,rail=d-2*post,gh=Math.min(30,h-wall-4),floor=11+wall,gw=c.groove_width_mm,gd=c.groove_depth_mm,thick=c.divider_thickness_mm;const xs=slots(tw-2*wall,c.groove_pitch_mm),ys=slots(td-2*wall,c.groove_pitch_mm);
   for(const [sx,x] of [['S',-w/2+post/2],['D',w/2-post/2]])for(const [sy,y] of [['F',-d/2+post/2],['R',d/2-post/2]]){let jc=0.35,joint=8,subs=[box(x-(joint+2*jc)/2,x+(joint+2*jc)/2,y-(joint+2*jc)/2,y+(joint+2*jc)/2,-0.1,7.6)];let innerY=y-(y<0?-1:1)*(post/2-4.15);for(const z of [LOW_RAIL,pitch-11])subs.push(...mortiseL('Y',x,innerY,y<0?-1:1,z));if(y>0){let innerX=x-(x<0?-1:1)*(post/2-4.15);for(const z of [22,pitch-22])subs.push(...mortiseL('X',innerX,y,x<0?-1:1,z))}p.push(part(`Montante_${sx}${sy}_L1`,'Telaio',[centered(x,y,pitch/2,post,post,pitch),box(x-joint/2,x+joint/2,y-joint/2,y+joint/2,pitch-0.2,pitch+6)],subs))}
   function beamBoxes(axis,cx,by,span,z){let length=span-2*post,adds=[centered(cx,by,z,axis==='Y'?10:length,axis==='Y'?length:10,8)],tip=length/2+7.9-HOOK_LEN/2,hz=z-2.5-HOOK/2+0.1;for(const s of [-1,1]){adds.push(axis==='Y'?centered(cx,by+s*(length/2+3.9),z,6,8.2,5):centered(cx+s*(length/2+3.9),by,z,8.2,6,5));adds.push(axis==='Y'?centered(cx,by+s*tip,hz,6,HOOK_LEN,HOOK+0.2):centered(cx+s*tip,by,hz,HOOK_LEN,6,HOOK+0.2))}return adds}
@@ -63,11 +105,21 @@ function partsForConfig(c){validate(c);const p=[];const w=c.width_mm,d=c.depth_m
       wheels.push(...alongX(ring,WHEEL.w,sg*(wallIn-WHEEL.slot/2),yw,wz));pins.push(...alongX(pin,pinLen,sg*(tw/2-0.3-pinLen/2),yw,wz))}
     p.push(meshPart('Ruota_cassetto','Ruote',ring,wheels,wy.length*2),meshPart('Perno_ruota','Ruote',pin,pins,wy.length*2))}
   p.push(part('Cassetto_L1','Cassetto',[box(-tw/2,tw/2,cy-td/2,cy+td/2,11,11+h),...grip.adds],[box(-tw/2+wall,tw/2-wall,cy-td/2+wall,cy+td/2-wall,floor,11+h+1),...grooveCuts,...grip.subs],bosses,wheelCuts));
-  if(c.divider_mode!=='open'){let len=td-2*wall+2*gd-0.4;let notches=ys.map(y=>box(-thick/2-0.5,thick/2+0.5,cy+y-gw/2,cy+y+gw/2,floor+gh/2-0.05,floor+gh+0.05));p.push(part('Divisorio_longitudinale','Divisori',[centered(0,cy,floor+gh/2,thick,len,gh)],notches));if(c.divider_mode==='grid'){let target=(td-2*wall)/4;let selected=[-target,0,target].map(t=>ys.reduce((a,b)=>Math.abs(a-t)<Math.abs(b-t)?a:b));[...new Set(selected)].forEach((y,i)=>{let lenx=tw-2*wall+2*gd-0.4;p.push(part(`Divisorio_trasversale_${i+1}`,'Divisori',[centered(0,cy+y,floor+gh/2,lenx,thick,gh)],[box(-gw/2,gw/2,cy+y-thick/2-0.5,cy+y+thick/2+0.5,floor-0.05,floor+gh/2+0.05)]))})}}
+  // divisori: un pezzo per forma; le copie uguali diventano quantità e compaiono nell'anteprima nelle loro posizioni
+  const types=new Map();
+  for(const r of dividerRuns(c)){const rel=r.cuts.map(u=>round(u-r.u0,3)),key=`${r.axis}|${round(r.u1-r.u0,3)}|${rel.join(',')}`,at=r.axis==='v'?[r.line,r.u0]:[r.u0,r.line];
+    if(!types.has(key)){const adds=[],subs=[],L=r.line;
+      if(r.axis==='v'){adds.push(box(L-thick/2,L+thick/2,cy+r.u0,cy+r.u1,floor,floor+gh));for(const u of r.cuts)subs.push(box(L-thick/2-0.5,L+thick/2+0.5,cy+u-gw/2,cy+u+gw/2,floor+gh/2-0.05,floor+gh+0.05))}
+      else{adds.push(box(r.u0,r.u1,cy+L-thick/2,cy+L+thick/2,floor,floor+gh));for(const u of r.cuts)subs.push(box(u-gw/2,u+gw/2,cy+L-thick/2-0.5,cy+L+thick/2+0.5,floor-0.05,floor+gh/2+0.05))}
+      types.set(key,{axis:r.axis,adds,subs,ref:at,off:[]})}
+    const T=types.get(key);T.off.push([at[0]-T.ref[0],at[1]-T.ref[1],0])}
+  for(const axis of ['v','h']){const list=[...types.values()].filter(T=>T.axis===axis),base=axis==='v'?'Divisorio_longitudinale':'Divisorio_trasversale';
+    list.forEach((T,i)=>p.push({...part(list.length>1?`${base}_${i+1}`:base,'Divisori',T.adds,T.subs),count:T.off.length,offsets:T.off}))}
   return p.sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0).map((v,i)=>({...v,id:`P${String(i+1).padStart(2,'0')}`}))}
 // STL e anteprima: i pezzi cilindrici (ruote, perni) hanno triangoli propri, gli altri passano dalla griglia.
 const stlTris=p=>p.stlTris||meshFromBoxes(p.adds,p.subs,p.late,p.lateSubs);
-const previewTris=p=>p.previewTris||previewMesh(p.adds,p.subs,p.late,p.lateSubs);
+const previewTris=p=>{if(p.previewTris)return p.previewTris;const one=previewMesh(p.adds,p.subs,p.late,p.lateSubs);
+  return p.offsets&&p.offsets.length>1?p.offsets.flatMap(o=>one.map(t=>t.map(q=>[q[0]+o[0],q[1]+o[1],q[2]+o[2]]))):one};
 // Griglia di celle definita dai bordi di tutti i box; le celle piene sono il pezzo.
 // late/lateSubs: seconda passata dopo i vuoti (supporti delle ruote dentro il cassetto e loro sedi).
 function voxelize(adds,subs,late=[],lateSubs=[]){
@@ -128,5 +180,5 @@ function previewMesh(adds,subs,late,lateSubs){
 // Pezzi che non entrano nell'area di stampa X x Y x Z in nessuna delle sei orientazioni a 90°.
 const PERMS=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
 function oversize(parts,bed=PRINT_BED){const B=[bed.x,bed.y,bed.z].map(v=>v+1e-6);return parts.map(p=>{const d=p.dims||[0,2,4].map(k=>Math.max(...p.adds.map(b=>b[k+1]))-Math.min(...p.adds.map(b=>b[k])));return {id:p.id,name:p.name,dims:d}}).filter(p=>!PERMS.some(o=>o.every((a,k)=>p.dims[a]<=B[k])))}
-Object.assign(O,{PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
+Object.assign(O,{dividerSpec,dividerGrid,layoutEdges,dividerRuns,PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
 })(window.OrganizerCfg=window.OrganizerCfg||{});
