@@ -121,6 +121,35 @@ def apply_boolean(target, cutter, operation):
     target.select_set(False)
 
 
+# Gancio a L in punta ai tenoni dei traversi: il traverso entra sollevato,
+# poi scende di HOOK_MM e resta agganciato al montante. Sopra il tenone
+# montato resta una luce di HOOK_MM nella sede.
+HOOK_MM = 1.5
+HOOK_LEN_MM = 3.0
+# Longherone basso alzato di HOOK_MM (era 11) per non avvicinare la tasca
+# del gancio alla sede verticale di impilamento.
+LOW_SIDE_RAIL_Z = 12.5
+
+
+def mortise_l(body, name, axis, cx, cy, inward, center_z, col):
+    """Sede 6,7 x 8,5 alta 5,7 + HOOK_MM, con tasca del gancio sul fondo.
+
+    inward: verso (+1/-1) lungo axis dalla faccia del montante al fondo sede.
+    """
+    depth, width, height = 8.5, 6.7, 5.7
+    main_z = center_z + HOOK_MM / 2
+    pocket_len = HOOK_LEN_MM + 0.7
+    pocket_off = inward * (depth / 2 - pocket_len / 2)
+    pocket_z = center_z - height / 2 - HOOK_MM / 2 + 0.05
+    if axis == "Y":
+        boxes = [(cx, cy, main_z, width, depth, height + HOOK_MM),
+                 (cx, cy + pocket_off, pocket_z, width, pocket_len, HOOK_MM + 0.1)]
+    else:
+        boxes = [(cx, cy, main_z, depth, width, height + HOOK_MM),
+                 (cx + pocket_off, cy, pocket_z, pocket_len, width, HOOK_MM + 0.1)]
+    apply_boolean(body, multi_box_cutter(name, boxes, col), "DIFFERENCE")
+
+
 def post(name, x, y, z, c, col, mat):
     size = c["post_mm"]
     pitch = c["tray_height_mm"] + c["clearance_above_mm"]
@@ -133,21 +162,19 @@ def post(name, x, y, z, c, col, mat):
     socket = box("_sede_operazione", (x, y, z + 3.75),
                  (joint + 2 * clearance, joint + 2 * clearance, 7.7), col, mat)
     apply_boolean(body, socket, "DIFFERENCE")
-    # Mortase cieche sui lati interni. I due assi sono sfalsati in quota,
+    # Mortase cieche a L sui lati interni. I due assi sono sfalsati in quota,
     # cosi' le sedi dei longheroni laterali e posteriori non si intersecano.
     side_inner_y = -1 if y < 0 else 1
-    for center_z in (z + 11, z + pitch - 11):
+    for center_z in (z + LOW_SIDE_RAIL_Z, z + pitch - 11):
         cy = y - side_inner_y * (size / 2 - 4.15)
-        cut = box("_sede_laterale", (x, cy, center_z),
-                  (6.7, 8.5, 5.7), col, mat)
-        apply_boolean(body, cut, "DIFFERENCE")
+        mortise_l(body, "_sede_laterale", "Y", x, cy, side_inner_y,
+                  center_z, col)
     if y > 0:
         side_inner_x = -1 if x < 0 else 1
         for center_z in (z + 22, z + pitch - 22):
             cx = x - side_inner_x * (size / 2 - 4.15)
-            cut = box("_sede_posteriore", (cx, y, center_z),
-                      (8.5, 6.7, 5.7), col, mat)
-            apply_boolean(body, cut, "DIFFERENCE")
+            mortise_l(body, "_sede_posteriore", "X", cx, y, side_inner_x,
+                      center_z, col)
     body["parte"] = "montante"
     body["sede_mm"] = joint + 2 * clearance
     body["tenone_mm"] = joint
@@ -169,6 +196,14 @@ def rail(name, axis, center, span, z, c, col, mat, guide_side=0):
             tc = (x + sign * (full_span / 2 + 3.9), y, z)
             ts = (8.2, 6, 5)
         apply_boolean(body, box("_tenone_trave", tc, ts, col, mat), "UNION")
+        # Dente del gancio: ultimi HOOK_LEN_MM del tenone, verso il basso.
+        tip = full_span / 2 + 7.9 - HOOK_LEN_MM / 2
+        hz = z - 2.5 - HOOK_MM / 2 + 0.1
+        if axis == "Y":
+            hc, hs = (x, y + sign * tip, hz), (6, HOOK_LEN_MM, HOOK_MM + 0.2)
+        else:
+            hc, hs = (x + sign * tip, y, hz), (HOOK_LEN_MM, 6, HOOK_MM + 0.2)
+        apply_boolean(body, box("_gancio_tenone", hc, hs, col, mat), "UNION")
     if guide_side:
         # Tre mortase cieche sul lato interno del longherone basso.
         gx = guide_side * (abs(x) - 2.85)
@@ -177,7 +212,7 @@ def rail(name, axis, center, span, z, c, col, mat, guide_side=0):
             cut = box("_sede_guida", (gx, gy, z + 0.6),
                       (4.5, 10.7, 3.7), col, mat)
             apply_boolean(body, cut, "DIFFERENCE")
-    body["giunto"] = "tenoni 6x5x8 mm, gioco 0.35 mm per lato"
+    body["giunto"] = "tenoni 6x5x8 mm con gancio a L 1,5 mm, gioco 0.35 mm per lato"
     return body
 
 
@@ -191,7 +226,7 @@ def fixed_guide(name, sign, inner_face, rail_len, z, vertical, col, mat):
     apply_boolean(guide, ledge, "UNION")
     offset = min(80, rail_len / 2 - 15)
     for gy in (-offset, 0, offset):
-        tab = box("_linguetta_guida", (sign * (inner_face + 6.9), gy, z + 11.6),
+        tab = box("_linguetta_guida", (sign * (inner_face + 6.9), gy, z + LOW_SIDE_RAIL_Z + 0.6),
                   (6.2, 10, 3), col, mat)
         apply_boolean(guide, tab, "UNION")
     guide["fissaggio"] = "3 linguette nelle sedi del longherone basso"
@@ -419,7 +454,7 @@ def build_organizer(c):
         for sx, xpos in (("S", -w / 2 + post_size / 2),
                          ("D", w / 2 - post_size / 2)):
             sign = -1 if sx == "S" else 1
-            for tag, rail_z in (("bassa", z + 11), ("alta", z + pitch - 11)):
+            for tag, rail_z in (("bassa", z + LOW_SIDE_RAIL_Z), ("alta", z + pitch - 11)):
                 rail(f"Longherone_{sx}_{tag}", "Y", (xpos, 0), d, rail_z,
                      c, frame, frame_mat, guide_side=sign if tag == "bassa" else 0)
             inner_face = tw / 2 + side
