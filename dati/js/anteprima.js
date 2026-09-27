@@ -21,22 +21,21 @@ function indexed(tris){const map=new Map(),vertices=[],triangles=[];const at=v=>
 function labelFor(name){const m=name.match(/^Divisorio_trasversale_(\d+)$/);return m?`Divisorio trasversale ${m[1]}`:name.replace(/_L1$/,'').replace(/_/g,' ')}
 
 // Ingombro e direzioni dell'esploso come in build_guide.py.
-function layout(data){const parts=data.parts;
+function layout(data){const parts=data.parts.concat(O.ghosts);
   const box=[0,1,2].map(i=>Math.min(...parts.map(p=>p.box[i]))).concat([3,4,5].map(i=>Math.max(...parts.map(p=>p.box[i]))));
   const center=[0,1,2].map(i=>(box[i]+box[i+3])/2),size=Math.max(box[3]-box[0],box[4]-box[1],box[5]-box[2]),dist=Math.round(size*.8)/10;
   data.assembly={box,center,size};data.spread={};
   for(const p of parts){const v=[0,1,2].map(i=>(p.box[i]+p.box[i+3])/2-center[i]),L=Math.hypot(...v);data.spread[p.id]=L>1e-6?v.map(x=>Math.round(x/L*dist*100)/100):[0,0,0]}}
-
-// "Mostra più livelli": ogni pezzo diventa la pila delle sue copie, così lista e quantità restano invariate
-// e selezionando un pezzo si evidenziano tutti i livelli.
+// "Mostra più livelli": le copie dei livelli superiori sono pezzi fantasma solo per la vista
+// (id P07·L2): fuori da lista e quantità, un clic seleziona il pezzo principale.
 function stack(data,c){const n=c.levels,pitch=c.tray_height_mm+c.clearance_above_mm;
-  for(const p of data.parts){if(p.kind!=='mesh')continue;const nv=p.vertices.length,v=[],t=[];
-    for(let l=0;l<n;l++){for(const q of p.vertices)v.push([q[0],q[1],Math.round((q[2]+l*pitch)*100)/100]);for(const tr of p.triangles)t.push(tr.map(i=>i+l*nv))}
-    p.vertices=v;p.triangles=t;p.box=[...p.box.slice(0,5),p.box[5]+(n-1)*pitch]}
-  data.caption=(data.caption||'')+` Vista con ${n} livelli impilati.`}
-
+  for(let l=1;l<n;l++)for(const p of data.parts){if(p.kind!=='mesh')continue;const dz=l*pitch;
+    const g={kind:'mesh',ghost:true,main:p.id,id:`${p.id}·L${l+1}`,label:p.label,group:p.group,color:p.color,css_color:p.css_color,quantity:0,
+      vertices:p.vertices.map(q=>[q[0],q[1],Math.round((q[2]+dz)*100)/100]),triangles:p.triangles,box:p.box.map((v,i)=>i===2||i===5?v+dz:v)};
+    Object.defineProperty(g,'normals',{get:()=>p.normals});O.ghosts.push(g)}
+  data.caption=(data.caption||'')+` Vista con ${n} livelli impilati: le copie superiori sono solo di riferimento.`}
 function patch(data){
-  O.standardData=data;O.applied=null;
+  O.standardData=data;O.applied=null;O.ghosts=[];
   const c=customize(data),shown=c||STANDARD;
   try{O.showLevels=localStorage.getItem(KEY_LEVELS)==='1'}catch(_){O.showLevels=false}
   if(O.showLevels&&shown.levels>1)stack(data,shown);

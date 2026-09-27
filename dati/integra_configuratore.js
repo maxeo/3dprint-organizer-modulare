@@ -33,7 +33,21 @@ if (!html.startsWith("const DATA=OrganizerCfg.patch(", at)) {
   html = html.slice(0, at) + "const DATA=OrganizerCfg.patch(" + html.slice(at + decl.length);
 }
 
-const scriptAt = html.lastIndexOf("<script", html.indexOf("const DATA="));
+// Pezzi fantasma di "Mostra più livelli": disegnati (e cliccabili) ma senza sigla,
+// nascosti con "Isola pezzo". Sostituzioni esatte: se il template cambia, meglio fermarsi.
+const VIEW_PATCHES = [
+  ["const vis=DATA.parts.filter(p=>visible(p.id))",
+   "const vis=DATA.parts.concat(OrganizerCfg.ghosts||[]).filter(p=>p.ghost?visible(p.main)&&!(isolate&&selected):visible(p.id))"],
+  ["for(const p of vis){const o=offset(p.id),q=project(",
+   "for(const p of vis){if(p.ghost)continue;const o=offset(p.id),q=project("],
+];
+for (const [from, to] of VIEW_PATCHES) {
+  if (html.includes(to)) continue;
+  if (html.split(from).length !== 2) throw Error(`patch del visualizzatore non applicabile: ${from}`);
+  html = html.replace(from, to);
+}
+
+const scriptAt =html.lastIndexOf("<script", html.indexOf("const DATA="));
 html = html.slice(0, scriptAt) + `${START}<script>\n${code}</script>${END}\n` + html.slice(scriptAt);
 fs.writeFileSync(guide, html);
 console.log(`configuratore integrato in ${path.relative(process.cwd(), guide)}: ${MODULES.length} moduli, ${Math.round(code.length / 1024)} kB`);

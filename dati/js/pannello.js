@@ -34,7 +34,7 @@ const CSS=`
 .cfg-plan{margin-top:14px;border-radius:14px;background:var(--bg);border:1px solid var(--line);padding:8px}.cfg-plan svg{display:block;width:100%;height:auto;max-height:340px}
 .cfg-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.cfg-facts div{border:1px solid var(--line);border-radius:10px;padding:6px 8px}.cfg-facts b{display:block;font-size:15px;font-variant-numeric:tabular-nums}.cfg-facts span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .cfg-actions{position:sticky;bottom:-18px;margin:14px -18px -18px;padding:12px 18px 16px;background:var(--card);border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px}
-.cfg-actions button{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer;background:var(--accent);color:#fff}.cfg-actions button.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}.cfg-actions button:disabled{opacity:.5;cursor:not-allowed}
+.cfg-actions button{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer;background:var(--accent);color:#fff}.cfg-actions button.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}.cfg-actions button:disabled{opacity:.5;cursor:not-allowed}.cfg-actions button.warn{background:#b3412f;color:#fff;border-color:#b3412f}
 .cfg-auto{flex-basis:100%;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer}.cfg-auto input{width:18px;height:18px;accent-color:var(--accent)}
 .cfg-levels{margin-top:10px}
 .cfg-status{flex-basis:100%;margin:0;font-size:12.5px;color:var(--muted);min-height:18px}.cfg-status.err{color:#b3412f;font-weight:700}.cfg-status.ok{color:var(--accent);font-weight:700}
@@ -51,7 +51,7 @@ function markup(){
 ${SECTIONS.map(([title,fields],si)=>`<div class="cfg-sec">${title}</div><div class="cfg-grid">${fields.map((f,i)=>control(f,fields.length%2&&i===fields.length-1)).join('')}</div>${si?'':'<label class="cfg-auto cfg-levels"><input type="checkbox" id="cfg_levels_show">Mostra più livelli nell’anteprima 3D</label>'}`).join('')}
 <div class="cfg-sec">Pianta</div><div class="cfg-plan" id="cfg_plan"></div>
 <div class="cfg-facts"><div><b id="cfg_f_pitch"></b><span>passo mm</span></div><div><b id="cfg_f_tray"></b><span>cassetto mm</span></div><div><b id="cfg_f_grooves"></b><span>sedi per lato</span></div><div><b id="cfg_f_total"></b><span>telaio mm</span></div></div>
-<div class="cfg-actions"><button id="cfg_apply" type="button">Applica all’anteprima</button><button id="cfg_zip" class="sec" type="button">Scarica ZIP STL</button><button id="cfg_std" class="sec" type="button">Torna allo standard</button><label class="cfg-auto"><input type="checkbox" id="cfg_auto">Applica automaticamente a ogni modifica</label><p class="cfg-status" id="cfg_status" role="status" aria-live="polite"></p></div>
+<div class="cfg-actions"><button id="cfg_apply" type="button">Applica all’anteprima</button><button id="cfg_zip" class="sec" type="button">Scarica ZIP STL</button><button id="cfg_std" class="sec" type="button">Predefinito</button><label class="cfg-auto"><input type="checkbox" id="cfg_auto">Applica automaticamente a ogni modifica</label><p class="cfg-status" id="cfg_status" role="status" aria-live="polite"></p></div>
 </aside><button class="cfg-fab" id="cfg_fab" type="button" aria-controls="cfg_panel"><i></i>Configura<small id="cfg_fab_info"></small></button>`}
 
 function readForm(){const c={preset:$('cfg_preset').value,divider_mode:$('cfg_divider_mode').value};for(const k of O.numeric)c[k]=Number($(`cfg_${k}_n`).value);return c}
@@ -103,6 +103,15 @@ function apply(c){const current=O.applied||O.STANDARD;if(same(c,current)){status
 let autoTimer=0;
 function autoApply(delay){clearTimeout(autoTimer);if(!$('cfg_auto').checked)return;autoTimer=setTimeout(()=>{try{apply(O.validate(readForm()))}catch(_){}},delay)}
 
+// Con una configurazione applicata i link "Scarica Pxx · STL" puntano a file che non esistono ancora:
+// l'STL del pezzo viene generato al clic.
+let generatedParts=null;
+function downloadPart(e){const a=e.target.closest&&e.target.closest('a[download]');if(!a||!O.applied)return;
+  const m=(a.getAttribute('href')||'').match(/^stl\/(P\d+)_(.+)\.stl$/);if(!m)return;
+  generatedParts=generatedParts||O.partsForConfig(O.applied);const p=generatedParts.find(q=>q.id===m[1]&&q.name===m[2]);if(!p)return;
+  e.preventDefault();const stl=O.stlBytes(p.name,O.meshFromBoxes(p.adds,p.subs)),url=URL.createObjectURL(new Blob([stl.bytes],{type:'model/stl'})),link=document.createElement('a');
+  link.href=url;link.download=`${p.id}_${p.name}.stl`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+
 function open(on,focus=true){document.documentElement.classList.toggle('cfg-open',on);if(on){render();if(focus)$('cfg_close').focus({preventScroll:true})}else $('cfg_fab').focus({preventScroll:true})}
 
 function mount(){
@@ -118,7 +127,11 @@ function mount(){
   $('cfg_preset').addEventListener('change',()=>{const v=O.PRESETS[$('cfg_preset').value];if(v)PRESET_KEYS.forEach((k,i)=>{$(`cfg_${k}_n`).value=v[i];$(`cfg_${k}`).value=v[i]});render();autoApply(150)});
   $('cfg_apply').addEventListener('click',()=>{try{apply(O.validate(readForm()))}catch(e){status(e.message,'err')}});
   $('cfg_zip').addEventListener('click',downloadZip);
-  $('cfg_std').addEventListener('click',()=>{writeForm(O.STANDARD);O.save(O.KEY_DRAFT,null);if(O.applied)apply({...O.STANDARD});else render()});
+  // Predefinito: il primo clic chiede conferma cambiando l'etichetta, il secondo ripristina.
+  let stdTimer=0;const std=$('cfg_std'),stdReset=()=>{clearTimeout(stdTimer);std.textContent='Predefinito';std.classList.remove('warn');delete std.dataset.confirm};
+  std.addEventListener('click',()=>{if(!std.dataset.confirm){std.dataset.confirm='1';std.textContent='Confermi? Ripristina';std.classList.add('warn');stdTimer=setTimeout(stdReset,4000);return}
+    stdReset();writeForm(O.STANDARD);O.save(O.KEY_DRAFT,null);if(O.applied)apply({...O.STANDARD});else render()});
+  std.addEventListener('blur',stdReset);
   $('cfg_fab').addEventListener('click',()=>open(true));$('cfg_close').addEventListener('click',()=>open(false));$('cfg_back').addEventListener('click',()=>open(false));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.documentElement.classList.contains('cfg-open'))open(false)});
   // Link "#configura" nella pagina (e redirect da configuratore.html) aprono il pannello.
@@ -126,8 +139,13 @@ function mount(){
   window.addEventListener('hashchange',byHash);byHash();
   $('cfg_levels_show').checked=!!O.showLevels;
   $('cfg_levels_show').addEventListener('change',e=>{try{localStorage.setItem(O.KEY_LEVELS,e.target.checked?'1':'0')}catch(_){}status('Rigenerazione dell’anteprima…','ok');saveView();setTimeout(()=>location.reload(),60)});
+  document.addEventListener('click',downloadPart,true);
+  // Un clic su una copia di livello superiore seleziona il pezzo principale.
+  if(typeof pick==='function'){const base=pick;pick=id=>{const g=(O.ghosts||[]).find(q=>q.id===id);return base(g?g.main:id)}}
   let auto=false;try{auto=localStorage.getItem(KEY_AUTO)==='1'}catch(_){}$('cfg_auto').checked=auto;
-  $('cfg_auto').addEventListener('change',()=>{try{localStorage.setItem(KEY_AUTO,$('cfg_auto').checked?'1':'0')}catch(_){}autoApply(150)});
+  // Con l'applicazione automatica il pulsante Applica non serve.
+  const syncAuto=()=>{$('cfg_apply').hidden=$('cfg_auto').checked};syncAuto();
+  $('cfg_auto').addEventListener('change',()=>{try{localStorage.setItem(KEY_AUTO,$('cfg_auto').checked?'1':'0')}catch(_){}syncAuto();autoApply(150)});
   render();restoreView()}
 
 O.openPanel=open;
