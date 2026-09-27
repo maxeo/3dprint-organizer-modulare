@@ -27,11 +27,11 @@ Il modello distingue telaio, guide, cassetti e divisori in collezioni. La strutt
 
 ## Stato del prototipo
 
-Questa è una base geometrica per sviluppare le varianti. I longheroni hanno tenoni 6 × 5 × 8 mm, i montanti sedi cieche 6,7 × 5,7 × 8,5 mm e le guide tre linguette per lato. Il gioco nominale dei tenoni è 0,35 mm per lato. Prima di stampare bisogna misurare lo spazio reale, calibrare i giochi con provini, verificare scorrimento e portata e suddividere i pezzi che superano il piano di stampa.
+Questa è una base geometrica per sviluppare le varianti. I traversi hanno tenoni 6 × 5 × 8 mm con un dente a L di 3 × 1,5 mm in punta; i montanti hanno sedi cieche 6,7 × 8,5 mm alte 5,7 + 1,5 mm con una tasca sul fondo. Il traverso si inserisce sollevato e poi si abbassa di 1,5 mm: resta agganciato e sopra il tenone rimane una luce di 1,5 mm. Longherone basso, guida a L e fermo posteriore sono un unico pezzo per lato (`Longherone_guida_S/D`). Il gioco nominale dei tenoni è 0,35 mm per lato. Prima di stampare bisogna misurare lo spazio reale, calibrare i giochi con provini, verificare scorrimento e portata e suddividere i pezzi che superano il piano di stampa.
 
 ## STL e guida HTML
 
-`stl/` contiene i 16 pezzi distinti del primo modulo standard. Per la torre a tre livelli occorrono tre copie di ogni file. `stl/manifest.json` registra quote e posizioni di montaggio; `dati/verifica_STL.json` riporta il controllo digitale dei file esportati.
+`stl/` contiene i 12 pezzi distinti del primo modulo standard. Per la torre a tre livelli occorrono tre copie di ogni file. `stl/manifest.json` registra quote e posizioni di montaggio.
 
 Per rigenerare gli STL dopo una modifica a `CONFIG`, decommenta la riga `export_first_level_stls(...)` in fondo allo script e premi Alt+P. Il formato è millimetri, con Z=0 sul piano di stampa. La guida offline è `guida.html`; la sua sorgente è `dati/guida_spec.json`.
 
