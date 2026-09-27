@@ -2,6 +2,8 @@
 
 Base parametrica per un organizer autoreggente e impilabile. La pagina in `originale/` è una traccia concettuale.
 
+**Guida di stampa e montaggio:** https://maxeo.github.io/3dprint-guide/organizer/guida.html
+
 ## File
 
 - `Organizer_Modulare_Parametrico.blend`: scena Blender con tre livelli standard (250 × 240 mm, passo 106 mm) e script incorporato nel Text Editor.

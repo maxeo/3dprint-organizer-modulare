@@ -14,6 +14,8 @@ Realizzare una base autoreggente e impilabile, trasformabile via script per tipo
 - L’anteprima usa `previewMesh()` (facce complanari accorpate, ~3.200 triangoli per la griglia), gli STL `meshFromBoxes()` (una faccia per cella, niente bordi a T).
 - Cassetto con scanalature a passo 20 mm, 13 posizioni per lato; divisorio longitudinale, variante `grid` con tre traversi. Presa cava a mezza C integrata nel frontale (circa 60 mm, sporgenza circa 15 mm), aperta verso l’interno.
 
+- Pubblicata su GitHub Pages: https://maxeo.github.io/3dprint-guide/organizer/guida.html (copia fatta da `aggiorna_guide.sh` in `D:D Printdprint-guide`, che ora scrive anche le misure dei pezzi nella scheda per il pulsante Stampante dell’indice). Repo privato `maxeo/3dprint-organizer-modulare`.
+
 ## Verifiche eseguite
 - Blender: tutti i pezzi del livello 1 un corpo e zero bordi non manifold; campionamento punti su ogni giunto (longheroni, traverse, pezzo laterale, cassetto): nessuna compenetrazione.
 - JS vs Blender (standard): 12 bounding box uguali al manifest (cassetto a parte: presa sfaccettata), volumi identici (es. montante 50 228 mm³, pezzo laterale 47 091,5 mm³), zero bordi aperti negli STL JS.
