@@ -193,8 +193,6 @@ function mount(){
   $('cfg_levels_show').checked=!!O.showLevels;
   $('cfg_levels_show').addEventListener('change',e=>{try{localStorage.setItem(O.KEY_LEVELS,e.target.checked?'1':'0')}catch(_){}O.showLevels=e.target.checked;refresh()});
   document.addEventListener('click',downloadPart,true);
-  // Un clic su una copia di livello superiore seleziona il pezzo principale.
-  if(typeof pick==='function'){const base=pick;pick=id=>{const g=(O.ghosts||[]).find(q=>q.id===id);return base(g?g.main:id)}}
   let auto=false;try{auto=localStorage.getItem(KEY_AUTO)==='1'}catch(_){}$('cfg_auto').checked=auto;
   // Con l'applicazione automatica il pulsante Applica non serve.
   const syncAuto=()=>{$('cfg_apply').hidden=$('cfg_auto').checked};syncAuto();

@@ -98,7 +98,8 @@ function dividerRuns(c){const {g,v,h}=layoutEdges(c),gd=c.groove_depth_mm,gw=c.g
   scan(v,g.xs,g.yn,'v');scan(h,g.ys,g.xn,'h');
   return runs}
 // Pezzi gemelli: stessa forma in due posizioni (i longheroni guida no: il fermo posteriore li rende speculari). Se le scatole
-// coincidono diventano un pezzo solo, con quantità 2: STL della prima copia, anteprima con tutte e due.
+// coincidono diventano un pezzo solo, con quantità 2: STL della prima copia; la seconda (twin) nella guida è la copia
+// "Txx·2", che un passaggio può montare in un momento diverso.
 const TWINS=[['Longherone_D_alta','Longherone_S_alta','Longherone_alta'],['Montante_DF_L1','Montante_SF_L1','Montante_anteriore_L1'],
   ['Traversa_posteriore_alta','Traversa_posteriore_bassa','Traversa_posteriore']];
 function shapeKey(q,rot){const all=[...q.adds,...(q.late||[])],lo=[0,2,4].map(i=>Math.min(...all.map(b=>b[i]))),hi=[1,3,5].map(i=>Math.max(...all.map(b=>b[i])));
@@ -139,7 +140,6 @@ function partsForConfig(c){validate(c);const p=[];const w=c.width_mm,d=c.depth_m
 // STL e anteprima: i pezzi cilindrici (ruote, perni) hanno triangoli propri, gli altri passano dalla griglia.
 const stlTris=p=>p.stlTris||meshFromBoxes(p.adds,p.subs,p.late,p.lateSubs);
 const previewTris=p=>{if(p.previewTris)return p.previewTris;const one=previewMesh(p.adds,p.subs,p.late,p.lateSubs);
-  if(p.twin)return one.concat(previewTris(p.twin));
   return p.offsets&&p.offsets.length>1?p.offsets.flatMap(o=>one.map(t=>t.map(q=>[q[0]+o[0],q[1]+o[1],q[2]+o[2]]))):one};
 // Griglia di celle definita dai bordi di tutti i box; le celle piene sono il pezzo.
 // late/lateSubs: seconda passata dopo i vuoti (supporti delle ruote dentro il cassetto e loro sedi).
@@ -204,5 +204,5 @@ const PERMS=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
 // anteprima (twin, offsets) non contano.
 const partDims=p=>p.dims||[0,2,4].map(k=>{const all=[...p.adds,...(p.late||[])];return round(Math.max(...all.map(b=>b[k+1]))-Math.min(...all.map(b=>b[k])),2)});
 function oversize(parts,bed=PRINT_BED){const B=[bed.x,bed.y,bed.z].map(v=>v+1e-6);return parts.map(p=>{const d=partDims(p);return {id:p.id,name:p.name,dims:d}}).filter(p=>!PERMS.some(o=>o.every((a,k)=>p.dims[a]<=B[k])))}
-Object.assign(O,{partDims,DIVIDER_TEE,dividerKey,dividerSpec,dividerGrid,layoutEdges,dividerRuns,PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
+Object.assign(O,{TWINS,partDims,DIVIDER_TEE,dividerKey,dividerSpec,dividerGrid,layoutEdges,dividerRuns,PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
 })(window.OrganizerCfg=window.OrganizerCfg||{});

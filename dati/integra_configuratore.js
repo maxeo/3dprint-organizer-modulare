@@ -39,11 +39,7 @@ if (!html.startsWith("const DATA=OrganizerCfg.patch(", at)) {
 
 // Sostituzioni esatte nel visualizzatore del template: se il template cambia, meglio fermarsi.
 const VIEW_PATCHES = [
-  // Pezzi fantasma di "Mostra più livelli": disegnati (e cliccabili) ma senza sigla, nascosti con "Isola pezzo".
-  ["const vis=DATA.parts.filter(p=>visible(p.id))",
-   "const vis=DATA.parts.concat(OrganizerCfg.ghosts||[]).filter(p=>p.ghost?visible(p.main)&&!(isolate&&selected):visible(p.id))"],
-  ["for(const p of vis){const o=offset(p.id),q=project(",
-   "for(const p of vis){if(p.ghost)continue;const o=offset(p.id),q=project("],
+  // I fantasmi di "Mostra più livelli" sono DATA.copies con ghost:true: li disegna il visualizzatore del template.
   // Applicazione senza ricaricare (dal_vivo.js): questi valori vengono riassegnati.
   ["const A=DATA.assembly,CENTER=A.center,SIZE=A.size||100,DIST=SIZE*3.5;",
    "let A=DATA.assembly,CENTER=A.center,SIZE=A.size||100,DIST=SIZE*3.5;"],

@@ -9,7 +9,7 @@ let worker=null,seq=0,applySeq=0;const waiting=new Map();
 function getWorker(){
   if(worker!==null)return worker;
   try{const src=document.querySelector('script[data-modulo="geometria.js"]').textContent;
-    const code=`self.window=self;\n${src}\nonmessage=e=>{const {id,c}=e.data;try{const G=self.OrganizerCfg;G.validate(c);const pre={};for(const p of G.partsForConfig(c))pre[p.name]=G.previewTris(p);postMessage({id,pre})}catch(err){postMessage({id,error:err.message})}}`;
+    const code=`self.window=self;\n${src}\nonmessage=e=>{const {id,c}=e.data;try{const G=self.OrganizerCfg;G.validate(c);const pre={};for(const p of G.partsForConfig(c)){pre[p.name]=G.previewTris(p);if(p.twin)pre[p.name+'·2']=G.previewTris(p.twin)}postMessage({id,pre})}catch(err){postMessage({id,error:err.message})}}`;
     worker=new Worker(URL.createObjectURL(new Blob([code],{type:'text/javascript'})));
     // se il worker non parte, le richieste in attesa ripiegano sul calcolo nella pagina
     worker.addEventListener('error',e=>{e.preventDefault();console.warn('Worker del configuratore non disponibile: calcolo nella pagina.',e.message);worker.terminate();worker=false;for(const r of waiting.values())r(null);waiting.clear()});
@@ -39,6 +39,7 @@ function swap(data){
   IDS.length=0;IDS.push(...DATA.parts.map(p=>p.id));
   // normali come nel template
   for(const p of DATA.parts)if(p.kind==='mesh')p.normals=p.triangles.map(t=>{const a=p.vertices[t[0]],b=p.vertices[t[1]],c=p.vertices[t[2]];return norm(cross([b[0]-a[0],b[1]-a[1],b[2]-a[2]],[c[0]-a[0],c[1]-a[1],c[2]-a[2]]))});
+  initCopies();
   A=DATA.assembly;CENTER=A.center;SIZE=A.size||100;DIST=SIZE*3.5;
   CAPTION0=DATA.caption||'Modello assemblato · orientamento di montaggio';
   totalQty=DATA.parts.reduce((s,p)=>s+p.quantity,0)+EXTRA.reduce((s,r)=>s+(r.quantity||1),0);
