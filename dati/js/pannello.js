@@ -39,16 +39,7 @@ const CSS=`
 .cfg-levels{margin-top:10px}
 .cfg-status{flex-basis:100%;margin:0;font-size:12.5px;color:var(--muted);min-height:18px}.cfg-status.err{color:#b3412f;font-weight:700}.cfg-status.ok{color:var(--accent);font-weight:700}
 @media(max-width:520px){.cfg-panel{top:0;right:0;bottom:0;width:100%;border-radius:0}.cfg-grid{grid-template-columns:1fr}.cfg-control.wide{grid-column:auto}.cfg-facts{grid-template-columns:repeat(2,1fr)}.cfg-fab{right:12px;bottom:12px}}
-.cfg-top{position:fixed;top:12px;right:12px;z-index:50;display:flex;gap:8px;align-items:flex-start}.cfg-top .tema-guida{position:static}
-.cfg-bed-wrap{position:relative}
-.cfg-bed-btn{display:inline-flex;align-items:center;gap:7px;font:600 13px/1 system-ui,sans-serif;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:99px;padding:8px 12px;margin:0;box-shadow:0 2px 10px rgba(0,0,0,.12);cursor:pointer}.cfg-bed-btn:hover{border-color:var(--accent)}
-.cfg-bed-btn svg{width:15px;height:15px;flex:none}.cfg-bed-btn b{font-variant-numeric:tabular-nums}.cfg-bed-btn i{display:none;width:8px;height:8px;border-radius:50%;background:#d9573f}.cfg-bed-btn.over{border-color:#d9573f}.cfg-bed-btn.over i{display:inline-block}
-.cfg-bed{position:absolute;right:0;top:calc(100% + 8px);width:300px;max-width:calc(100vw - 24px);box-sizing:border-box;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 16px 40px rgba(0,0,0,.25);font:14px/1.4 system-ui,sans-serif}
-.cfg-bed>b{font-size:15px}.cfg-bed p{font-size:12.5px;color:var(--muted);margin:4px 0 10px}
-.cfg-bed-xyz{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.cfg-bed-xyz label{display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:800;color:var(--muted)}
-.cfg-bed input,.cfg-bed select{width:100%;box-sizing:border-box;height:32px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:inherit;font-size:13px;color:var(--ink);background:var(--bg)}.cfg-bed input{font-weight:700;font-variant-numeric:tabular-nums}
-.cfg-bed select{margin-top:8px}.cfg-bed .cfg-bed-note{margin:10px 0 0;min-height:0}.cfg-bed .cfg-bed-note.err{color:#d9573f;font-weight:700}
-@media print{.cfg-fab,.cfg-panel,.cfg-back,.cfg-top{display:none}}`;
+@media print{.cfg-fab,.cfg-panel,.cfg-back{display:none}}`;
 
 function control([k,label,min,max,step],wide){return `<div class="cfg-control${wide?' wide':''}"><label for="cfg_${k}_n"><span class="cfg-name">${label}</span><span class="cfg-val"><input id="cfg_${k}_n" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}"><em>${k==='levels'?'':'mm'}</em></span></label><input id="cfg_${k}" type="range" min="${min}" max="${max}" step="${step}" aria-label="${label}"></div>`}
 
@@ -79,31 +70,9 @@ function planSvg(c){const w=c.width_mm,d=c.depth_mm,post=c.post_mm,tw=w-2*post-2
   // Il fronte (cassetto estraibile) è a y negativa: in pianta lo mostriamo in basso.
   return svg.replace('<rect','<g transform="scale(1,-1)"><rect')+`</g><text x="0" y="${r(d/2+22)}" text-anchor="middle" font-size="11" fill="#50665b">FRONTE / ESTRAZIONE ↓</text></svg>`}
 
-// Area di stampa della stampante (pulsante in alto a destra), salvata nelle preferenze.
-const KEY_BED='organizer-piatto';
-const PRINTERS=[['Comune 230 × 230',230,230,250],['Creality Ender-3',220,220,250],['Prusa MK4',250,210,220],['Bambu Lab A1 / P1S / X1',256,256,256],['Bambu Lab A1 mini',180,180,180]];
-function getBed(){try{const b=JSON.parse(localStorage.getItem(KEY_BED)||'null');if(b&&['x','y','z'].every(k=>b[k]>0))return b}catch(_){}return {...O.PRINT_BED}}
+// Area di stampa: pulsante Stampante comune a tutte le guide (stampante.py della skill guida-stampa-3d).
+const getBed=()=>window.StampanteGuide?StampanteGuide.get():{...O.PRINT_BED};
 const bedText=b=>`${fmt(b.x)} × ${fmt(b.y)} × ${fmt(b.z)} mm`;
-// Pezzi oltre l'area con la configurazione mostrata nell'anteprima (applicata o standard).
-function shownOversize(){try{return O.oversize(O.partsForConfig(O.applied||O.STANDARD),getBed())}catch(_){return []}}
-function updateBedButton(){const b=getBed(),big=shownOversize(),btn=$('cfg_bed_btn');
-  $('cfg_bed_label').textContent=`${fmt(b.x)} × ${fmt(b.y)}`;btn.classList.toggle('over',big.length>0);
-  btn.title=big.length?`Area di stampa ${bedText(b)}: ${big.length} pezzi dell’anteprima non entrano`:`Area di stampa ${bedText(b)}: tutti i pezzi dell’anteprima entrano`;
-  const n=$('cfg_bed_note');n.textContent=big.length?`Non entrano: ${big.map(p=>p.id).join(', ')}.`:'Tutti i pezzi dell’anteprima entrano.';n.className='cfg-bed-note'+(big.length?' err':'')}
-function setBed(b){try{localStorage.setItem(KEY_BED,JSON.stringify(b))}catch(_){}updateBedButton();render()}
-function bedMarkup(){return `<div class="cfg-top" id="cfg_top"><div class="cfg-bed-wrap"><button type="button" class="cfg-bed-btn" id="cfg_bed_btn" aria-expanded="false" aria-controls="cfg_bed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 21h10M9 17v4M15 17v4"/></svg>Stampante <b id="cfg_bed_label"></b><i></i></button>
-<div class="cfg-bed" id="cfg_bed" hidden><b>Area di stampa</b><p>Dimensioni massime della tua stampante, in mm. Servono a segnalare i pezzi che non entrano.</p>
-<div class="cfg-bed-xyz">${['x','y','z'].map(k=>`<label><span>${k.toUpperCase()}</span><input id="cfg_bed_${k}" type="number" min="50" max="1000" step="1" inputmode="numeric"></label>`).join('')}</div>
-<select id="cfg_bed_preset" aria-label="Stampanti comuni"><option value="">Stampanti comuni…</option>${PRINTERS.map((p,i)=>`<option value="${i}">${p[0]} · ${p[1]} × ${p[2]} × ${p[3]}</option>`).join('')}</select>
-<p class="cfg-bed-note" id="cfg_bed_note"></p></div></div></div>`}
-function mountBed(){const top=$('cfg_top'),theme=document.querySelector('.tema-guida');if(theme)top.appendChild(theme);
-  const b=getBed();for(const k of ['x','y','z']){const inp=$(`cfg_bed_${k}`);inp.value=b[k];inp.addEventListener('input',()=>{const v=Number(inp.value);if(v>0)setBed({...getBed(),[k]:v})})}
-  $('cfg_bed_preset').addEventListener('change',e=>{const p=PRINTERS[e.target.value];if(!p)return;const nb={x:p[1],y:p[2],z:p[3]};['x','y','z'].forEach(k=>$(`cfg_bed_${k}`).value=nb[k]);setBed(nb);e.target.value=''});
-  const pop=$('cfg_bed'),btn=$('cfg_bed_btn'),show=on=>{pop.hidden=!on;btn.setAttribute('aria-expanded',on)};
-  btn.addEventListener('click',e=>{e.stopPropagation();show(pop.hidden)});
-  document.addEventListener('click',e=>{if(!pop.hidden&&!e.target.closest('.cfg-bed-wrap'))show(false)});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden){show(false);btn.focus()}});
-  updateBedButton()}
 
 function render(){let c;try{c=O.validate(readForm())}catch(e){status(e.message,'err');$('cfg_apply').disabled=$('cfg_zip').disabled=true;return}
   $('cfg_apply').disabled=$('cfg_zip').disabled=false;
@@ -154,7 +123,7 @@ function open(on,focus=true){document.documentElement.classList.toggle('cfg-open
 
 function mount(){
   const st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
-  const host=document.createElement('div');host.innerHTML=markup()+bedMarkup();document.body.append(...host.childNodes);
+  const host=document.createElement('div');host.innerHTML=markup();document.body.append(...host.childNodes);
   writeForm(O.load(O.KEY_DRAFT)||O.applied||O.STANDARD);
   const a=O.applied;$('cfg_fab').classList.toggle('custom',!!a);$('cfg_fab_info').textContent=a?`${fmt(a.width_mm)} × ${fmt(a.depth_mm)}`:'';
   $('cfg_fab').title=a?'Anteprima con configurazione personalizzata':'Anteprima dello standard';
@@ -189,7 +158,8 @@ function mount(){
   // Con l'applicazione automatica il pulsante Applica non serve.
   const syncAuto=()=>{$('cfg_apply').hidden=$('cfg_auto').checked};syncAuto();
   $('cfg_auto').addEventListener('change',()=>{try{localStorage.setItem(KEY_AUTO,$('cfg_auto').checked?'1':'0')}catch(_){}syncAuto();autoApply(150)});
-  mountBed();render();restoreView()}
+  if(window.StampanteGuide)StampanteGuide.onChange(()=>render());
+  render();restoreView()}
 
 O.openPanel=open;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
