@@ -59,7 +59,7 @@ function customize(data,c,pre){
   // ruote e perni: gruppo proprio, 4 per cassetto (nella vista compaiono tutti e quattro)
   if(O.wheelCount(c)&&!groups.Ruote){groups.Ruote={color:'#d9a441'};data.groups=groups}
   const parts=generated.map(g=>{const ref=byName[g.name],geo=indexed(pre&&pre[g.name]||O.previewTris(g)),css=ref?ref.css_color:(groups[g.group]||{}).color||'#b97058';
-    return {kind:'mesh',...geo,id:g.id,label:ref?ref.label:labelFor(g.name),group:g.group,file:`stl/${g.id}_${g.name}.stl`,quantity:c.levels*(g.count||1),color:ref?ref.color:hexRgb(css),css_color:css,print:ref?ref.print:'divisori',note_html:'',dims:g.dims||[0,1,2].map(i=>Math.round((geo.box[i+3]-geo.box[i])*100)/100)}});
+    return {kind:'mesh',...geo,id:g.id,label:ref?ref.label:labelFor(g.name),group:g.group,file:`stl/${g.id}_${g.name}.stl`,quantity:c.levels*(g.count||1),color:ref?ref.color:hexRgb(css),css_color:css,print:ref?ref.print:'divisori',note_html:'',dims:O.partDims(g)}});
   const newId=Object.fromEntries(generated.map(g=>[g.name,g.id]));
   // pezzi nuovi: tutti i divisori vanno dove lo standard ha il divisorio longitudinale, ruote e perni con il cassetto
   const extra=generated.filter(g=>!byName[g.name]&&g.group!=='Ruote').map(g=>g.id),wheelIds=generated.filter(g=>g.group==='Ruote').map(g=>g.id);

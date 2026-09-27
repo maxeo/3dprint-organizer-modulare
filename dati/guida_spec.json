@@ -694,7 +694,7 @@
         "summary": "ruote piatte 100% · perni in piedi"
       }
     ],
-    "note_html": "Gli STL rappresentano un modulo. La colonna quantità indica tre copie per costruire la torre mostrata nella pagina di progetto."
+    "note_html": "Gli STL rappresentano un modulo. La colonna Copie indica quante stamparne per tutta la torre: una per livello, due per livello per i pezzi doppi (longherone alto, montante anteriore, traversa posteriore), una per ruota per ruote e perni."
   },
   "notes": {
     "eyebrow": "04 / Dettagli",

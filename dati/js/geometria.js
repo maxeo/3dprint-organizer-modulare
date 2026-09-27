@@ -200,6 +200,9 @@ function previewMesh(adds,subs,late,lateSubs){
 
 // Pezzi che non entrano nell'area di stampa X x Y x Z in nessuna delle sei orientazioni a 90°.
 const PERMS=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
-function oversize(parts,bed=PRINT_BED){const B=[bed.x,bed.y,bed.z].map(v=>v+1e-6);return parts.map(p=>{const d=p.dims||[0,2,4].map(k=>Math.max(...p.adds.map(b=>b[k+1]))-Math.min(...p.adds.map(b=>b[k])));return {id:p.id,name:p.name,dims:d}}).filter(p=>!PERMS.some(o=>o.every((a,k)=>p.dims[a]<=B[k])))}
-Object.assign(O,{DIVIDER_TEE,dividerKey,dividerSpec,dividerGrid,layoutEdges,dividerRuns,PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
+// Misure di stampa di un pezzo (una copia): dalle scatole aggiunte, o dims per i pezzi a mesh propria. Le copie in
+// anteprima (twin, offsets) non contano.
+const partDims=p=>p.dims||[0,2,4].map(k=>{const all=[...p.adds,...(p.late||[])];return round(Math.max(...all.map(b=>b[k+1]))-Math.min(...all.map(b=>b[k])),2)});
+function oversize(parts,bed=PRINT_BED){const B=[bed.x,bed.y,bed.z].map(v=>v+1e-6);return parts.map(p=>{const d=partDims(p);return {id:p.id,name:p.name,dims:d}}).filter(p=>!PERMS.some(o=>o.every((a,k)=>p.dims[a]<=B[k])))}
+Object.assign(O,{partDims,DIVIDER_TEE,dividerKey,dividerSpec,dividerGrid,layoutEdges,dividerRuns,PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
 })(window.OrganizerCfg=window.OrganizerCfg||{});
