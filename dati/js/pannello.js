@@ -73,6 +73,8 @@ function planSvg(c){const w=c.width_mm,d=c.depth_mm,post=c.post_mm,tw=w-2*post-2
 // Area di stampa: pulsante Stampante comune a tutte le guide (stampante.py della skill guida-stampa-3d).
 const getBed=()=>window.StampanteGuide?StampanteGuide.get():{...O.PRINT_BED};
 const bedText=b=>`${fmt(b.x)} × ${fmt(b.y)} × ${fmt(b.z)} mm`;
+// i pezzi si rigenerano con le misure scelte: l'avviso della stampante rimanda al configuratore
+window.STAMPANTE_SUGGERIMENTO='Le misure sono configurabili: riducile con <a href="#configura">Configura</a> e i pezzi si rigenerano per la tua stampante.';
 
 function render(){let c;try{c=O.validate(readForm())}catch(e){status(e.message,'err');$('cfg_apply').disabled=$('cfg_zip').disabled=true;return}
   $('cfg_apply').disabled=$('cfg_zip').disabled=false;
