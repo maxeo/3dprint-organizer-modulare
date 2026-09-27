@@ -8,7 +8,7 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const guide = path.join(root, "guida.html");
-const MODULES = ["geometria.js", "stl_zip.js", "anteprima.js", "dal_vivo.js", "pannello.js"];
+const MODULES = ["geometria.js", "stl_zip.js", "anteprima.js", "dal_vivo.js", "divisori.js", "pannello.js"];
 const START = "<!--configuratore:inizio-->", END = "<!--configuratore:fine-->";
 const RSTART = "<!--configuratore-ridisegno:inizio-->", REND = "<!--configuratore-ridisegno:fine-->";
 

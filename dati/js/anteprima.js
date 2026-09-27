@@ -3,11 +3,11 @@
 (function(O){
 "use strict";
 const KEY_DRAFT='organizer-config',KEY_APPLIED='organizer-config-applicata',KEY_LEVELS='organizer-mostra-livelli';
-const STANDARD={preset:'standard',divider_mode:'lane',width_mm:250,depth_mm:240,tray_height_mm:48,clearance_above_mm:58,levels:3,groove_pitch_mm:20,groove_width_mm:3,groove_depth_mm:1,divider_thickness_mm:2.4,wall_mm:3.2,post_mm:22,side_clearance_mm:0.5,vertical_clearance_mm:0.4,wheels:4};
+const STANDARD={preset:'standard',divider_mode:'modulare',dividers_long:1,dividers_cross:0,width_mm:250,depth_mm:240,tray_height_mm:48,clearance_above_mm:58,levels:3,groove_pitch_mm:20,groove_width_mm:3,groove_depth_mm:1,divider_thickness_mm:2.4,wall_mm:3.2,post_mm:22,side_clearance_mm:0.5,vertical_clearance_mm:0.4,wheels:4};
 
 function load(key){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v&&typeof v==='object'?{...STANDARD,...v}:null}catch(_){return null}}
 function save(key,c){try{c?localStorage.setItem(key,JSON.stringify(c)):localStorage.removeItem(key);return true}catch(_){return false}}
-const isStandard=c=>Object.keys(STANDARD).every(k=>k==='preset'||(k==='wheels'?O.wheelCount(c)===STANDARD.wheels:c[k]===STANDARD[k]));
+const isStandard=c=>O.dividerKey(c)===O.dividerKey(STANDARD)&&Object.keys(STANDARD).every(k=>k==='preset'||k.startsWith('divider')||(k==='wheels'?O.wheelCount(c)===STANDARD.wheels:c[k]===STANDARD[k]));
 const fmt=v=>v.toLocaleString('it-IT',{maximumFractionDigits:2});
 const nameOf=p=>p.file.replace(/^.*\/P\d+_/,'').replace(/\.stl$/,'');
 const hexRgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
@@ -61,10 +61,11 @@ function customize(data,c,pre){
   const parts=generated.map(g=>{const ref=byName[g.name],geo=indexed(pre&&pre[g.name]||O.previewTris(g)),css=ref?ref.css_color:(groups[g.group]||{}).color||'#b97058';
     return {kind:'mesh',...geo,id:g.id,label:ref?ref.label:labelFor(g.name),group:g.group,file:`stl/${g.id}_${g.name}.stl`,quantity:c.levels*(g.count||1),color:ref?ref.color:hexRgb(css),css_color:css,print:ref?ref.print:'divisori',note_html:'',dims:g.dims||[0,1,2].map(i=>Math.round((geo.box[i+3]-geo.box[i])*100)/100)}});
   const newId=Object.fromEntries(generated.map(g=>[g.name,g.id]));
-  // pezzi nuovi: i divisori trasversali vanno con il divisorio, ruote e perni con il cassetto
+  // pezzi nuovi: tutti i divisori vanno dove lo standard ha il divisorio longitudinale, ruote e perni con il cassetto
   const extra=generated.filter(g=>!byName[g.name]&&g.group!=='Ruote').map(g=>g.id),wheelIds=generated.filter(g=>g.group==='Ruote').map(g=>g.id);
-  const divider=newId.Divisorio_longitudinale,drawer=newId.Cassetto_L1;
-  const remap=ids=>{const out=(ids||[]).map(id=>newId[oldName[id]]).filter(Boolean);const add=ids=>out.push(...ids.filter(id=>!out.includes(id)));if(divider&&out.includes(divider))add(extra);if(drawer&&out.includes(drawer))add(wheelIds);return out};
+  const dividerIds=generated.filter(g=>g.group==='Divisori').map(g=>g.id),drawer=newId.Cassetto_L1;
+  const remap=ids=>{const old=(ids||[]).map(id=>oldName[id]),out=old.map(n=>newId[n]).filter(Boolean);const add=ids=>out.push(...ids.filter(id=>!out.includes(id)));
+    if(old.includes('Divisorio_longitudinale'))add(dividerIds);if(out.some(id=>dividerIds.includes(id)))add(extra);if(drawer&&out.includes(drawer))add(wheelIds);return out};
   const all=parts.map(p=>p.id);
   data.steps=(data.steps||[]).map(s=>{const r={...s,parts:remap(s.parts),built:s.built&&remap(s.built)};if(s.moving)r.moving=remap(s.moving);
     if((s.parts||[]).length===data.parts.length)r.parts=all;return r}).filter((s,i)=>s.parts.length||!(data.steps[i].parts||[]).length);

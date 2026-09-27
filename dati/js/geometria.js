@@ -59,6 +59,8 @@ function dividerSpec(c){const l=LEGACY_DIV[c.divider_mode];
   if(c.divider_mode==='disegno'){const L=c.divider_layout||{};return {mode:'disegno',v:[...(L.v||[])].sort(),h:[...(L.h||[])].sort()}}
   return {mode:'modulare',long:Math.max(0,Math.round(+c.dividers_long||0)),cross:Math.max(0,Math.round(+c.dividers_cross||0))}}
 // Sedi (xs, ys: dal centro del cassetto) e nodi della griglia (xn, yn: pareti interne + sedi).
+// Confronto fra configurazioni: stesso schema di divisori anche se scritto in modo diverso (lane = modulare 1+0).
+const dividerKey=c=>JSON.stringify(dividerSpec(c));
 function dividerGrid(c){const tw=c.width_mm-2*c.post_mm-2*c.side_clearance_mm,td=c.depth_mm-c.post_mm-8,wall=c.wall_mm,
   xs=slots(tw-2*wall,c.groove_pitch_mm),ys=slots(td-2*wall,c.groove_pitch_mm);
   return {tw,td,wall,xs,ys,xn:[-(tw/2-wall),...xs,tw/2-wall],yn:[-(td/2-wall),...ys,td/2-wall]}}
@@ -180,5 +182,5 @@ function previewMesh(adds,subs,late,lateSubs){
 // Pezzi che non entrano nell'area di stampa X x Y x Z in nessuna delle sei orientazioni a 90°.
 const PERMS=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
 function oversize(parts,bed=PRINT_BED){const B=[bed.x,bed.y,bed.z].map(v=>v+1e-6);return parts.map(p=>{const d=p.dims||[0,2,4].map(k=>Math.max(...p.adds.map(b=>b[k+1]))-Math.min(...p.adds.map(b=>b[k])));return {id:p.id,name:p.name,dims:d}}).filter(p=>!PERMS.some(o=>o.every((a,k)=>p.dims[a]<=B[k])))}
-Object.assign(O,{dividerSpec,dividerGrid,layoutEdges,dividerRuns,PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
+Object.assign(O,{dividerKey,dividerSpec,dividerGrid,layoutEdges,dividerRuns,PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
 })(window.OrganizerCfg=window.OrganizerCfg||{});

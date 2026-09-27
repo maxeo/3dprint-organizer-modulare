@@ -125,7 +125,7 @@ const PRINT_BED={x:230,y:230,z:250};
 const PRESETS={standard:[250,240,48,58],mezzo:[140,240,48,58],basso:[250,240,30,40],alto:[250,240,80,70],compatto:[200,200,48,58]};
 const numeric=['width_mm','depth_mm','tray_height_mm','clearance_above_mm','levels','groove_pitch_mm','groove_width_mm','groove_depth_mm','divider_thickness_mm','wall_mm','post_mm','side_clearance_mm','vertical_clearance_mm'];
 const round=(v,n=2)=>Number(v.toFixed(n));
-function validate(c){if(!Object.values(c).every(v=>typeof v!=='number'||Number.isFinite(v)))throw Error('Inserisci numeri validi in tutti i campi.');if(c.width_mm<=2*c.post_mm+60||c.depth_mm<=2*c.post_mm+80)throw Error('Larghezza o profondità insufficiente per telaio e cassetto.');if(c.tray_height_mm<20||c.clearance_above_mm<15||c.tray_height_mm+c.clearance_above_mm<65||c.wall_mm<2||c.wall_mm>=c.tray_height_mm/3)throw Error('Altezza, luce o passo insufficienti per le sedi del telaio.');if(!Number.isInteger(c.levels)||c.levels<1||c.levels>8)throw Error('I livelli devono essere tra 1 e 8.');if(c.groove_pitch_mm<10||c.groove_width_mm<=c.divider_thickness_mm||c.groove_depth_mm<0.4||c.groove_depth_mm>c.wall_mm-1.2)throw Error('Le scanalature non lasciano sufficiente materiale o gioco.');if(!['open','lane','grid'].includes(c.divider_mode))throw Error('Modalità divisori non valida.');if(!WHEEL_COUNTS.includes(wheelCount(c)))throw Error('Ruote: 0, 4, 6, 8 oppure 10.');if(wheelCount(c))wheelYs(c);return c}
+function validate(c){if(!Object.values(c).every(v=>typeof v!=='number'||Number.isFinite(v)))throw Error('Inserisci numeri validi in tutti i campi.');if(c.width_mm<=2*c.post_mm+60||c.depth_mm<=2*c.post_mm+80)throw Error('Larghezza o profondità insufficiente per telaio e cassetto.');if(c.tray_height_mm<20||c.clearance_above_mm<15||c.tray_height_mm+c.clearance_above_mm<65||c.wall_mm<2||c.wall_mm>=c.tray_height_mm/3)throw Error('Altezza, luce o passo insufficienti per le sedi del telaio.');if(!Number.isInteger(c.levels)||c.levels<1||c.levels>8)throw Error('I livelli devono essere tra 1 e 8.');if(c.groove_pitch_mm<10||c.groove_width_mm<=c.divider_thickness_mm||c.groove_depth_mm<0.4||c.groove_depth_mm>c.wall_mm-1.2)throw Error('Le scanalature non lasciano sufficiente materiale o gioco.');dividerRuns(c);if(!WHEEL_COUNTS.includes(wheelCount(c)))throw Error('Ruote: 0, 4, 6, 8 oppure 10.');if(wheelCount(c))wheelYs(c);return c}
 // Ruote opzionali: due per lato sotto il cassetto, su perno Ø3,42 (accoppiamento tarato con i perni Sakura in sedi da 3,4).
 // La ruota sporge DROP sotto il fondo e corre sulla mensola della guida, abbassata di conseguenza: il cassetto resta alla
 // stessa quota e il modulo non cresce. Sedi del perno quadrate da 3,4 (stampabili in orizzontale, tengono il perno sulle facce).
@@ -167,6 +167,50 @@ function part(name,group,adds,subs=[],late=[],lateSubs=[]){return {name,group,ad
 // Gancio a L: dente HOOK x HOOK_LEN in punta al tenone; sede alta 5,7+HOOK con tasca sul fondo.
 const HOOK=1.5,HOOK_LEN=3,LOW_RAIL=12.5;
 function mortiseL(axis,cx,cy,inward,z){const off=inward*(8.5/2-(HOOK_LEN+0.7)/2),pz=z-2.85-HOOK/2+0.05;return axis==='Y'?[centered(cx,cy,z+HOOK/2,6.7,8.5,5.7+HOOK),centered(cx,cy+off,pz,6.7,HOOK_LEN+0.7,HOOK+0.1)]:[centered(cx,cy,z+HOOK/2,8.5,6.7,5.7+HOOK),centered(cx+off,cy,pz,HOOK_LEN+0.7,6.7,HOOK+0.1)]}
+// ---------------- divisori ----------------
+// Due modalità. 'modulare': quanti longitudinali (fronte-fondo) e quanti trasversali (sponda-sponda), distribuiti sulle
+// sedi; ogni pezzo ha un intaglio a ogni sede, quindi si sposta e si incrocia liberamente. 'disegno': schema fatto nel
+// modale (tratti fra sedi vicine); pezzi su misura con intagli solo agli incroci. Intagli a mezzo legno, da un lato solo:
+// longitudinali da sopra, trasversali da sotto. Le vecchie modalità open/lane/grid valgono 0+0, 1+0, 1+3.
+const LEGACY_DIV={open:[0,0],lane:[1,0],grid:[1,3]};
+function dividerSpec(c){const l=LEGACY_DIV[c.divider_mode];
+  if(l)return {mode:'modulare',long:l[0],cross:l[1]};
+  if(c.divider_mode==='disegno'){const L=c.divider_layout||{};return {mode:'disegno',v:[...(L.v||[])].sort(),h:[...(L.h||[])].sort()}}
+  return {mode:'modulare',long:Math.max(0,Math.round(+c.dividers_long||0)),cross:Math.max(0,Math.round(+c.dividers_cross||0))}}
+// Sedi (xs, ys: dal centro del cassetto) e nodi della griglia (xn, yn: pareti interne + sedi).
+// Confronto fra configurazioni: stesso schema di divisori anche se scritto in modo diverso (lane = modulare 1+0).
+const dividerKey=c=>JSON.stringify(dividerSpec(c));
+function dividerGrid(c){const tw=c.width_mm-2*c.post_mm-2*c.side_clearance_mm,td=c.depth_mm-c.post_mm-8,wall=c.wall_mm,
+  xs=slots(tw-2*wall,c.groove_pitch_mm),ys=slots(td-2*wall,c.groove_pitch_mm);
+  return {tw,td,wall,xs,ys,xn:[-(tw/2-wall),...xs,tw/2-wall],yn:[-(td/2-wall),...ys,td/2-wall]}}
+// n sedi il più vicino possibile a una distribuzione uniforme (con 1 pezzo: quella centrale).
+function spreadOn(sl,n,span,what){const out=[];
+  for(let i=1;i<=n;i++){const t=-span/2+span*i/(n+1),best=sl.filter(v=>!out.includes(v)).sort((a,b)=>Math.abs(a-t)-Math.abs(b-t))[0];
+    if(best===undefined)throw Error(`Ci sono solo ${sl.length} sedi per i divisori ${what}.`);out.push(best)}
+  return out.sort((a,b)=>a-b)}
+// Tratti accesi: v 'i:k' = longitudinale sulla sede xs[i], fra yn[k] e yn[k+1]; h 'j:k' = trasversale sulla sede ys[j],
+// fra xn[k] e xn[k+1]. Lo usa anche il modale (divisori.js) per partire dai numeri.
+function layoutEdges(c){const g=dividerGrid(c),sp=dividerSpec(c),v=new Set(),h=new Set();
+  if(sp.mode==='modulare'){
+    for(const x of spreadOn(g.xs,sp.long,g.tw-2*g.wall,'longitudinali')){const i=g.xs.indexOf(x);for(let k=0;k<g.yn.length-1;k++)v.add(`${i}:${k}`)}
+    for(const y of spreadOn(g.ys,sp.cross,g.td-2*g.wall,'trasversali')){const j=g.ys.indexOf(y);for(let k=0;k<g.xn.length-1;k++)h.add(`${j}:${k}`)}}
+  else{const ok=(e,a,b)=>{const [i,k]=e.split(':').map(Number);return Number.isInteger(i)&&Number.isInteger(k)&&i>=0&&k>=0&&i<a&&k<b};
+    for(const e of sp.v)if(ok(e,g.xs.length,g.yn.length-1))v.add(e);for(const e of sp.h)if(ok(e,g.ys.length,g.xn.length-1))h.add(e)}
+  return {g,sp,v,h}}
+// Pezzi: tratti consecutivi sulla stessa sede. u0/u1: estremi lungo il pezzo (dal centro del cassetto); cuts: posizioni
+// degli intagli. Estremi: in una parete entra nella sua sede; contro un pezzo che passa si ferma sulla sua faccia; in un
+// angolo o libero arriva fino al bordo del nodo (negli angoli il nodo va al longitudinale).
+function dividerRuns(c){const {g,sp,v,h}=layoutEdges(c),gd=c.groove_depth_mm,t=c.divider_thickness_mm/2,runs=[];
+  // tratti che toccano il nodo (a indice in xn, b indice in yn)
+  const vAt=(a,b)=>[v.has(`${a-1}:${b-1}`),v.has(`${a-1}:${b}`)],hAt=(a,b)=>[h.has(`${b-1}:${a-1}`),h.has(`${b-1}:${a}`)];
+  const scan=(set,lines,nodes,axis)=>{for(let i=0;i<lines.length;i++)for(let k=0;k<nodes.length-1;k++){
+    if(!set.has(`${i}:${k}`)||(k>0&&set.has(`${i}:${k-1}`)))continue;let e=k+1;while(e<nodes.length-1&&set.has(`${i}:${e}`))e++;
+    const other=n=>axis==='v'?hAt(i+1,n):vAt(n,i+1),end=(n,sg)=>{if(n===0||n===nodes.length-1)return nodes[n]+sg*(gd-0.2);
+      const o=other(n);return (o[0]&&o[1])||(axis==='h'&&(o[0]||o[1]))?nodes[n]-sg*t:nodes[n]+sg*t};
+    const cuts=[];for(let n=k+1;n<e;n++){const o=other(n);if(sp.mode==='modulare'||(o[0]&&o[1]))cuts.push(nodes[n])}
+    runs.push({axis,line:lines[i],u0:end(k,-1),u1:end(e,1),cuts})}};
+  scan(v,g.xs,g.yn,'v');scan(h,g.ys,g.xn,'h');
+  return runs}
 function partsForConfig(c){validate(c);const p=[];const w=c.width_mm,d=c.depth_mm,post=c.post_mm,wall=c.wall_mm,h=c.tray_height_mm,pitch=h+c.clearance_above_mm,side=c.side_clearance_mm,vertical=c.vertical_clearance_mm,tw=w-2*post-2*side,td=d-post-8,cy=-3,rail=d-2*post,gh=Math.min(30,h-wall-4),floor=11+wall,gw=c.groove_width_mm,gd=c.groove_depth_mm,thick=c.divider_thickness_mm;const xs=slots(tw-2*wall,c.groove_pitch_mm),ys=slots(td-2*wall,c.groove_pitch_mm);
   for(const [sx,x] of [['S',-w/2+post/2],['D',w/2-post/2]])for(const [sy,y] of [['F',-d/2+post/2],['R',d/2-post/2]]){let jc=0.35,joint=8,subs=[box(x-(joint+2*jc)/2,x+(joint+2*jc)/2,y-(joint+2*jc)/2,y+(joint+2*jc)/2,-0.1,7.6)];let innerY=y-(y<0?-1:1)*(post/2-4.15);for(const z of [LOW_RAIL,pitch-11])subs.push(...mortiseL('Y',x,innerY,y<0?-1:1,z));if(y>0){let innerX=x-(x<0?-1:1)*(post/2-4.15);for(const z of [22,pitch-22])subs.push(...mortiseL('X',innerX,y,x<0?-1:1,z))}p.push(part(`Montante_${sx}${sy}_L1`,'Telaio',[centered(x,y,pitch/2,post,post,pitch),box(x-joint/2,x+joint/2,y-joint/2,y+joint/2,pitch-0.2,pitch+6)],subs))}
   function beamBoxes(axis,cx,by,span,z){let length=span-2*post,adds=[centered(cx,by,z,axis==='Y'?10:length,axis==='Y'?length:10,8)],tip=length/2+7.9-HOOK_LEN/2,hz=z-2.5-HOOK/2+0.1;for(const s of [-1,1]){adds.push(axis==='Y'?centered(cx,by+s*(length/2+3.9),z,6,8.2,5):centered(cx+s*(length/2+3.9),by,z,8.2,6,5));adds.push(axis==='Y'?centered(cx,by+s*tip,hz,6,HOOK_LEN,HOOK+0.2):centered(cx+s*tip,by,hz,HOOK_LEN,6,HOOK+0.2))}return adds}
@@ -182,11 +226,21 @@ function partsForConfig(c){validate(c);const p=[];const w=c.width_mm,d=c.depth_m
       wheels.push(...alongX(ring,WHEEL.w,sg*(wallIn-WHEEL.slot/2),yw,wz));pins.push(...alongX(pin,pinLen,sg*(tw/2-0.3-pinLen/2),yw,wz))}
     p.push(meshPart('Ruota_cassetto','Ruote',ring,wheels,wy.length*2),meshPart('Perno_ruota','Ruote',pin,pins,wy.length*2))}
   p.push(part('Cassetto_L1','Cassetto',[box(-tw/2,tw/2,cy-td/2,cy+td/2,11,11+h),...grip.adds],[box(-tw/2+wall,tw/2-wall,cy-td/2+wall,cy+td/2-wall,floor,11+h+1),...grooveCuts,...grip.subs],bosses,wheelCuts));
-  if(c.divider_mode!=='open'){let len=td-2*wall+2*gd-0.4;let notches=ys.map(y=>box(-thick/2-0.5,thick/2+0.5,cy+y-gw/2,cy+y+gw/2,floor+gh/2-0.05,floor+gh+0.05));p.push(part('Divisorio_longitudinale','Divisori',[centered(0,cy,floor+gh/2,thick,len,gh)],notches));if(c.divider_mode==='grid'){let target=(td-2*wall)/4;let selected=[-target,0,target].map(t=>ys.reduce((a,b)=>Math.abs(a-t)<Math.abs(b-t)?a:b));[...new Set(selected)].forEach((y,i)=>{let lenx=tw-2*wall+2*gd-0.4;p.push(part(`Divisorio_trasversale_${i+1}`,'Divisori',[centered(0,cy+y,floor+gh/2,lenx,thick,gh)],[box(-gw/2,gw/2,cy+y-thick/2-0.5,cy+y+thick/2+0.5,floor-0.05,floor+gh/2+0.05)]))})}}
+  // divisori: un pezzo per forma; le copie uguali diventano quantità e compaiono nell'anteprima nelle loro posizioni
+  const types=new Map();
+  for(const r of dividerRuns(c)){const rel=r.cuts.map(u=>round(u-r.u0,3)),key=`${r.axis}|${round(r.u1-r.u0,3)}|${rel.join(',')}`,at=r.axis==='v'?[r.line,r.u0]:[r.u0,r.line];
+    if(!types.has(key)){const adds=[],subs=[],L=r.line;
+      if(r.axis==='v'){adds.push(box(L-thick/2,L+thick/2,cy+r.u0,cy+r.u1,floor,floor+gh));for(const u of r.cuts)subs.push(box(L-thick/2-0.5,L+thick/2+0.5,cy+u-gw/2,cy+u+gw/2,floor+gh/2-0.05,floor+gh+0.05))}
+      else{adds.push(box(r.u0,r.u1,cy+L-thick/2,cy+L+thick/2,floor,floor+gh));for(const u of r.cuts)subs.push(box(u-gw/2,u+gw/2,cy+L-thick/2-0.5,cy+L+thick/2+0.5,floor-0.05,floor+gh/2+0.05))}
+      types.set(key,{axis:r.axis,adds,subs,ref:at,off:[]})}
+    const T=types.get(key);T.off.push([at[0]-T.ref[0],at[1]-T.ref[1],0])}
+  for(const axis of ['v','h']){const list=[...types.values()].filter(T=>T.axis===axis),base=axis==='v'?'Divisorio_longitudinale':'Divisorio_trasversale';
+    list.forEach((T,i)=>p.push({...part(list.length>1?`${base}_${i+1}`:base,'Divisori',T.adds,T.subs),count:T.off.length,offsets:T.off}))}
   return p.sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0).map((v,i)=>({...v,id:`P${String(i+1).padStart(2,'0')}`}))}
 // STL e anteprima: i pezzi cilindrici (ruote, perni) hanno triangoli propri, gli altri passano dalla griglia.
 const stlTris=p=>p.stlTris||meshFromBoxes(p.adds,p.subs,p.late,p.lateSubs);
-const previewTris=p=>p.previewTris||previewMesh(p.adds,p.subs,p.late,p.lateSubs);
+const previewTris=p=>{if(p.previewTris)return p.previewTris;const one=previewMesh(p.adds,p.subs,p.late,p.lateSubs);
+  return p.offsets&&p.offsets.length>1?p.offsets.flatMap(o=>one.map(t=>t.map(q=>[q[0]+o[0],q[1]+o[1],q[2]+o[2]]))):one};
 // Griglia di celle definita dai bordi di tutti i box; le celle piene sono il pezzo.
 // late/lateSubs: seconda passata dopo i vuoti (supporti delle ruote dentro il cassetto e loro sedi).
 function voxelize(adds,subs,late=[],lateSubs=[]){
@@ -247,7 +301,7 @@ function previewMesh(adds,subs,late,lateSubs){
 // Pezzi che non entrano nell'area di stampa X x Y x Z in nessuna delle sei orientazioni a 90°.
 const PERMS=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
 function oversize(parts,bed=PRINT_BED){const B=[bed.x,bed.y,bed.z].map(v=>v+1e-6);return parts.map(p=>{const d=p.dims||[0,2,4].map(k=>Math.max(...p.adds.map(b=>b[k+1]))-Math.min(...p.adds.map(b=>b[k])));return {id:p.id,name:p.name,dims:d}}).filter(p=>!PERMS.some(o=>o.every((a,k)=>p.dims[a]<=B[k])))}
-Object.assign(O,{PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
+Object.assign(O,{dividerKey,dividerSpec,dividerGrid,layoutEdges,dividerRuns,PRINT_BED,WHEEL,WHEEL_COUNTS,wheelCount,wheelYs,stlTris,previewTris,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
 })(window.OrganizerCfg=window.OrganizerCfg||{});
 </script>
 <script data-modulo="stl_zip.js">
@@ -267,11 +321,11 @@ Object.assign(O,{stlBytes,makeZip});
 (function(O){
 "use strict";
 const KEY_DRAFT='organizer-config',KEY_APPLIED='organizer-config-applicata',KEY_LEVELS='organizer-mostra-livelli';
-const STANDARD={preset:'standard',divider_mode:'lane',width_mm:250,depth_mm:240,tray_height_mm:48,clearance_above_mm:58,levels:3,groove_pitch_mm:20,groove_width_mm:3,groove_depth_mm:1,divider_thickness_mm:2.4,wall_mm:3.2,post_mm:22,side_clearance_mm:0.5,vertical_clearance_mm:0.4,wheels:4};
+const STANDARD={preset:'standard',divider_mode:'modulare',dividers_long:1,dividers_cross:0,width_mm:250,depth_mm:240,tray_height_mm:48,clearance_above_mm:58,levels:3,groove_pitch_mm:20,groove_width_mm:3,groove_depth_mm:1,divider_thickness_mm:2.4,wall_mm:3.2,post_mm:22,side_clearance_mm:0.5,vertical_clearance_mm:0.4,wheels:4};
 
 function load(key){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v&&typeof v==='object'?{...STANDARD,...v}:null}catch(_){return null}}
 function save(key,c){try{c?localStorage.setItem(key,JSON.stringify(c)):localStorage.removeItem(key);return true}catch(_){return false}}
-const isStandard=c=>Object.keys(STANDARD).every(k=>k==='preset'||(k==='wheels'?O.wheelCount(c)===STANDARD.wheels:c[k]===STANDARD[k]));
+const isStandard=c=>O.dividerKey(c)===O.dividerKey(STANDARD)&&Object.keys(STANDARD).every(k=>k==='preset'||k.startsWith('divider')||(k==='wheels'?O.wheelCount(c)===STANDARD.wheels:c[k]===STANDARD[k]));
 const fmt=v=>v.toLocaleString('it-IT',{maximumFractionDigits:2});
 const nameOf=p=>p.file.replace(/^.*\/P\d+_/,'').replace(/\.stl$/,'');
 const hexRgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
@@ -325,10 +379,11 @@ function customize(data,c,pre){
   const parts=generated.map(g=>{const ref=byName[g.name],geo=indexed(pre&&pre[g.name]||O.previewTris(g)),css=ref?ref.css_color:(groups[g.group]||{}).color||'#b97058';
     return {kind:'mesh',...geo,id:g.id,label:ref?ref.label:labelFor(g.name),group:g.group,file:`stl/${g.id}_${g.name}.stl`,quantity:c.levels*(g.count||1),color:ref?ref.color:hexRgb(css),css_color:css,print:ref?ref.print:'divisori',note_html:'',dims:g.dims||[0,1,2].map(i=>Math.round((geo.box[i+3]-geo.box[i])*100)/100)}});
   const newId=Object.fromEntries(generated.map(g=>[g.name,g.id]));
-  // pezzi nuovi: i divisori trasversali vanno con il divisorio, ruote e perni con il cassetto
+  // pezzi nuovi: tutti i divisori vanno dove lo standard ha il divisorio longitudinale, ruote e perni con il cassetto
   const extra=generated.filter(g=>!byName[g.name]&&g.group!=='Ruote').map(g=>g.id),wheelIds=generated.filter(g=>g.group==='Ruote').map(g=>g.id);
-  const divider=newId.Divisorio_longitudinale,drawer=newId.Cassetto_L1;
-  const remap=ids=>{const out=(ids||[]).map(id=>newId[oldName[id]]).filter(Boolean);const add=ids=>out.push(...ids.filter(id=>!out.includes(id)));if(divider&&out.includes(divider))add(extra);if(drawer&&out.includes(drawer))add(wheelIds);return out};
+  const dividerIds=generated.filter(g=>g.group==='Divisori').map(g=>g.id),drawer=newId.Cassetto_L1;
+  const remap=ids=>{const old=(ids||[]).map(id=>oldName[id]),out=old.map(n=>newId[n]).filter(Boolean);const add=ids=>out.push(...ids.filter(id=>!out.includes(id)));
+    if(old.includes('Divisorio_longitudinale'))add(dividerIds);if(out.some(id=>dividerIds.includes(id)))add(extra);if(drawer&&out.includes(drawer))add(wheelIds);return out};
   const all=parts.map(p=>p.id);
   data.steps=(data.steps||[]).map(s=>{const r={...s,parts:remap(s.parts),built:s.built&&remap(s.built)};if(s.moving)r.moving=remap(s.moving);
     if((s.parts||[]).length===data.parts.length)r.parts=all;return r}).filter((s,i)=>s.parts.length||!(data.steps[i].parts||[]).length);
@@ -416,6 +471,109 @@ async function live(c){
 O.live=live;
 })(window.OrganizerCfg=window.OrganizerCfg||{});
 </script>
+<script data-modulo="divisori.js">
+// Modale "Disegna i divisori": la pianta interna del cassetto con le sedi; si colorano i tratti fra due sedi vicine
+// (clic o trascinamento, anche col dito). Dallo schema geometria.js ricava pezzi su misura con intagli solo agli incroci.
+(function(O){
+"use strict";
+const $=id=>document.getElementById(id);
+const CSS=`
+.dv-back{position:fixed;inset:0;z-index:1100;background:rgba(15,12,14,.45);display:none;align-items:center;justify-content:center;padding:16px}
+.dv-open .dv-back{display:flex}
+.dv-box{box-sizing:border-box;width:min(760px,100%);max-height:100%;overflow:auto;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 22px 60px rgba(0,0,0,.35)}
+.dv-box *{box-sizing:border-box}
+.dv-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.dv-head h2{margin:0;font-size:21px}.dv-head p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:560px}
+.dv-tools{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 8px}
+.dv-tools button,.dv-foot button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:9px;padding:7px 11px;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.dv-tools button:hover,.dv-foot button.sec:hover{background:var(--bg)}
+.dv-tools input{width:52px;height:30px;border:1px solid var(--line);border-radius:7px;padding:2px 6px;font:inherit;font-weight:700;text-align:right;color:var(--ink);background:var(--card)}
+.dv-tools label{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:800;color:var(--muted)}
+.dv-plan{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:8px;touch-action:none;user-select:none;-webkit-user-select:none}
+.dv-plan svg{display:block;width:100%;height:auto;max-height:min(58vh,560px)}
+.dv-edge{stroke:transparent;cursor:pointer}.dv-edge:hover+.dv-seg:not(.on){stroke:var(--accent);opacity:.45}
+.dv-seg{stroke:#9fb3a6;opacity:.6;pointer-events:none}.dv-seg.on{opacity:1}.dv-seg.on{stroke:#b97058;stroke-dasharray:none}
+.dv-line{cursor:pointer;fill:var(--muted);font-weight:800}.dv-line:hover{fill:var(--accent)}
+.dv-sum{margin:10px 0 0;font-size:13px;color:var(--muted);min-height:18px}.dv-sum b{color:var(--ink)}.dv-sum.err{color:#b3412f;font-weight:700}
+.dv-foot{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:12px}
+.dv-foot button.main{background:var(--accent);border-color:var(--accent);color:#fff}
+@media(max-width:520px){.dv-back{padding:0}.dv-box{border-radius:0;height:100%;padding:14px}.dv-plan svg{max-height:62vh}}
+@media print{.dv-back{display:none!important}}`;
+
+let base=null,done=null,v=new Set(),h=new Set(),mounted=false;
+
+function mount(){if(mounted)return;mounted=true;
+  const st=document.createElement('style');st.textContent=CSS;document.head.appendChild(st);
+  const d=document.createElement('div');d.className='dv-back';d.id='dv_back';
+  d.innerHTML=`<div class="dv-box" role="dialog" aria-modal="true" aria-labelledby="dv_title">
+<div class="dv-head"><div><h2 id="dv_title">Disegna i divisori</h2><p>Colora i tratti fra le sedi: clic per aggiungere o togliere, trascina lungo una sede per colorarne tanti. Un clic sul numero di una sede la riempie o la svuota tutta. I pezzi si generano su misura, con gli intagli solo dove si incrociano.</p></div>
+<button class="cfg-x" id="dv_close" type="button" aria-label="Chiudi"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+<div class="dv-tools"><label>Longitudinali <input id="dv_long" type="number" min="0" step="1"></label><label>Trasversali <input id="dv_cross" type="number" min="0" step="1"></label><button id="dv_fill" type="button" title="Disegna i divisori modulari indicati, distribuiti sulle sedi">Disegna</button><button id="dv_clear" type="button">Svuota</button></div>
+<div class="dv-plan" id="dv_plan"></div><p class="dv-sum" id="dv_sum" aria-live="polite"></p>
+<div class="dv-foot"><button class="sec" id="dv_cancel" type="button">Annulla</button><button class="main" id="dv_ok" type="button">Usa questo schema</button></div></div>`;
+  document.body.appendChild(d);
+  $('dv_close').onclick=$('dv_cancel').onclick=()=>close(false);$('dv_ok').onclick=()=>close(true);
+  d.addEventListener('click',e=>{if(e.target===d)close(false)});
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.documentElement.classList.contains('dv-open')){e.stopPropagation();close(false)}},true);
+  $('dv_clear').onclick=()=>{v.clear();h.clear();draw()};
+  $('dv_fill').onclick=()=>seed({...base,divider_mode:'modulare',dividers_long:+$('dv_long').value||0,dividers_cross:+$('dv_cross').value||0});
+  // trascinamento: il primo tratto decide se si colora o si cancella
+  const plan=$('dv_plan');let paint=null;
+  // tratto più vicino al punto (in mm): vicino agli incroci vince la sede più vicina, non l'ultima disegnata
+  const at=(e,axis)=>{const svg=plan.querySelector('svg'),m=svg&&svg.getScreenCTM();if(!m)return null;
+    const q=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()),x=q.x,y=-q.y,g=grid(),hit=Math.max(8,base.groove_pitch_mm*0.55)/2;
+    const near=(lines,u,nodes,w,ax)=>{let best=null;lines.forEach((L,i)=>{const d=Math.abs(w-L),k=nodes.findIndex((n,j)=>j<nodes.length-1&&u>=n&&u<=nodes[j+1]);
+      if(k>=0&&d<=hit&&(!best||d<best.d))best={d,key:`${ax}:${i}:${k}`}});return best};
+    const a=near(g.xs,y,g.yn,x,'v'),b=near(g.ys,x,g.xn,y,'h');if(axis)return axis==="v"?a&&a.key:b&&b.key;return a&&(!b||a.d<=b.d)?a.key:b?b.key:null};
+  const set=(key,on)=>{const [ax,rest]=[key[0],key.slice(2)],S=ax==='v'?v:h;if(on)S.add(rest);else S.delete(rest)};
+  const has=key=>(key[0]==='v'?v:h).has(key.slice(2));
+  plan.addEventListener('pointerdown',e=>{const t=e.target.closest('[data-line]');
+    if(t){const [ax,i]=t.dataset.line.split(':'),n=ax==='v'?grid().yn.length-1:grid().xn.length-1,keys=[...Array(n).keys()].map(k=>`${ax}:${i}:${k}`),on=!keys.every(has);keys.forEach(k=>set(k,on));draw();return}
+    const k=at(e);if(!k)return;e.preventDefault();paint=!has(k);dragAxis=k[0];last={clientX:e.clientX,clientY:e.clientY};set(k,paint);draw()});
+  // i movimenti veloci saltano dei tratti: si campiona anche il percorso fra un evento e l'altro
+  // durante il trascinamento si resta sulla direzione del primo tratto: vicino agli incroci non si colora la sede perpendicolare
+  let last=null,dragAxis=null;
+  plan.addEventListener('pointermove',e=>{if(paint===null)return;const p={clientX:e.clientX,clientY:e.clientY},a=last||p,n=Math.max(1,Math.ceil(Math.hypot(p.clientX-a.clientX,p.clientY-a.clientY)/4));last=p;
+    let changed=false;for(let i=1;i<=n;i++){const k=at({clientX:a.clientX+(p.clientX-a.clientX)*i/n,clientY:a.clientY+(p.clientY-a.clientY)*i/n},dragAxis);if(k&&has(k)!==paint){set(k,paint);changed=true}}
+    if(changed)draw()});
+  const stop=()=>{paint=null;last=null};window.addEventListener('pointerup',stop);window.addEventListener('pointercancel',stop)}
+
+const grid=()=>O.dividerGrid(base);
+function seed(c){try{const L=O.layoutEdges(c);v=L.v;h=L.h;draw()}catch(e){sum(e.message,true)}}
+function sum(t,err){const s=$('dv_sum');s.innerHTML=t;s.className='dv-sum'+(err?' err':'')}
+const layout=()=>({v:[...v].sort(),h:[...h].sort()});
+
+function draw(){const g=grid(),r=n=>Math.round(n*100)/100,W=g.tw-2*g.wall,D=g.td-2*g.wall,pad=16,sw=Math.max(2,base.groove_width_mm),hit=Math.max(8,base.groove_pitch_mm*0.55);
+  // y verso l'alto = fondo: il fronte (y negativa) sta in basso come nella pianta del pannello
+  let s=`<svg viewBox="${r(-W/2-pad-6)} ${r(-D/2-pad-4)} ${r(W+2*pad+12)} ${r(D+2*pad+22)}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schema dei divisori">`;
+  s+=`<rect x="${r(-W/2-g.wall)}" y="${r(-D/2-g.wall)}" width="${r(W+2*g.wall)}" height="${r(D+2*g.wall)}" rx="2" fill="#658f7b"/><rect x="${r(-W/2)}" y="${r(-D/2)}" width="${r(W)}" height="${r(D)}" fill="#e3eee3"/>`;
+  const seg=(key,x1,y1,x2,y2)=>`<line class="dv-edge" data-e="${key}" x1="${r(x1)}" y1="${r(-y1)}" x2="${r(x2)}" y2="${r(-y2)}" stroke-width="${r(hit)}"/><line class="dv-seg${(key[0]==='v'?v:h).has(key.slice(2))?' on':''}" x1="${r(x1)}" y1="${r(-y1)}" x2="${r(x2)}" y2="${r(-y2)}" stroke-width="${r(sw)}" stroke-linecap="square"/>`;
+  g.xs.forEach((x,i)=>{for(let k=0;k<g.yn.length-1;k++)s+=seg(`v:${i}:${k}`,x,g.yn[k],x,g.yn[k+1])});
+  g.ys.forEach((y,j)=>{for(let k=0;k<g.xn.length-1;k++)s+=seg(`h:${j}:${k}`,g.xn[k],y,g.xn[k+1],y)});
+  // numeri delle sedi: clic = riga intera
+  g.xs.forEach((x,i)=>s+=`<text class="dv-line" data-line="v:${i}" x="${r(x)}" y="${r(-D/2-g.wall-5)}" text-anchor="middle" font-size="8">${i+1}</text>`);
+  g.ys.forEach((y,j)=>s+=`<text class="dv-line" data-line="h:${j}" x="${r(-W/2-g.wall-4)}" y="${r(-y+3)}" text-anchor="end" font-size="8">${String.fromCharCode(65+j%26)}</text>`);
+  s+=`<text x="0" y="${r(D/2+g.wall+14)}" text-anchor="middle" font-size="8" fill="#50665b">FRONTE ↓</text></svg>`;
+  $('dv_plan').innerHTML=s;
+  // riepilogo dei pezzi che verranno generati
+  try{const runs=O.dividerRuns({...base,divider_mode:'disegno',divider_layout:layout()});
+    if(!runs.length){sum('Nessun divisorio: il cassetto resta libero.');return}
+    const kinds=new Set(runs.map(q=>`${q.axis}|${O.round(q.u1-q.u0,3)}|${q.cuts.map(u=>O.round(u-q.u0,3))}`)),cuts=runs.reduce((a,q)=>a+q.cuts.length,0)/2;
+    const lv=base.levels||1;
+    sum(`<b>${runs.length}</b> ${runs.length===1?'pezzo':'pezzi'} per cassetto (${kinds.size} ${kinds.size===1?'forma':'forme diverse'}), <b>${cuts}</b> ${cuts===1?'incrocio':'incroci'} a mezzo legno${lv>1?` · ${runs.length*lv} da stampare per ${lv} livelli`:''}.`)}
+  catch(e){sum(e.message,true)}}
+
+function close(ok){document.documentElement.classList.remove('dv-open');const cb=done;done=null;if(ok&&cb)cb(layout())}
+
+// c: configurazione del pannello (misure e sedi); cb(layout) quando si conferma.
+function openDividers(c,cb){mount();base=c;done=cb;
+  const g=grid(),sp=O.dividerSpec(c);$('dv_long').max=g.xs.length;$('dv_cross').max=g.ys.length;
+  $('dv_long').value=sp.mode==='modulare'?sp.long:0;$('dv_cross').value=sp.mode==='modulare'?sp.cross:0;
+  if(sp.mode==='disegno'){const L=O.layoutEdges(c);v=L.v;h=L.h;draw()}else seed(c);
+  document.documentElement.classList.add('dv-open');$('dv_ok').focus({preventScroll:true})}
+
+O.openDividers=openDividers;
+})(window.OrganizerCfg=window.OrganizerCfg||{});
+</script>
 <script data-modulo="pannello.js">
 // Pannello "Configura": pulsante fisso, campi con slider, pianta, applicazione e ZIP degli STL.
 (function(O){
@@ -431,6 +589,10 @@ const SECTIONS=[
   ['Scanalature modulari',[['groove_pitch_mm','Passo sedi',10,60,0.1],['groove_width_mm','Larghezza sede',2.5,6,0.1],['groove_depth_mm','Profondità sede',0.4,3,0.1],['divider_thickness_mm','Spessore divisorio',2,4,0.1]]],
   ['Giochi e struttura',[['wall_mm','Parete cassetto',2,8,0.1],['post_mm','Montante quadrato',16,40,0.1],['side_clearance_mm','Gioco laterale',0.2,2,0.05],['vertical_clearance_mm','Gioco verticale',0.2,2,0.05]]]];
 
+// divisori modulari: quanti pezzi per direzione (il massimo segue il numero di sedi)
+const DIVIDER_FIELDS=[['dividers_long','Longitudinali',0,9,1],['dividers_cross','Trasversali',0,9,1]];
+const DIVIDER_KEYS=DIVIDER_FIELDS.map(f=>f[0]);
+let drawn=null;   // schema del modale (modalità 'disegno')
 const CSS=`
 .cfg-panel,.cfg-panel *,.cfg-fab{box-sizing:border-box}
 .cfg-fab{position:fixed;right:18px;bottom:18px;z-index:900;display:flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:12px 18px;background:var(--accent);color:#fff;font:inherit;font-weight:800;box-shadow:0 10px 28px rgba(0,0,0,.28);cursor:pointer}
@@ -456,25 +618,43 @@ const CSS=`
 .cfg-actions button{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer;background:var(--accent);color:#fff}.cfg-actions button.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}.cfg-actions button:disabled{opacity:.5;cursor:not-allowed}.cfg-actions button.warn{background:#b3412f;color:#fff;border-color:#b3412f}
 .cfg-auto{flex-basis:100%;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer}.cfg-auto input{width:18px;height:18px;accent-color:var(--accent)}
 .cfg-levels{margin-top:10px}
+.cfg-dv{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.cfg-dv span{font-size:12.5px;color:var(--muted);flex:1 1 200px}.cfg-dv span b{color:var(--ink)}
+.cfg-dv button{border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:9px;padding:8px 12px;font:inherit;font-size:13px;font-weight:800;cursor:pointer}.cfg-dv button:hover{background:var(--accent);color:#fff}
+.cfg-control[hidden]{display:none}
 .cfg-status{flex-basis:100%;margin:0;font-size:12.5px;color:var(--muted);min-height:18px}.cfg-status.err{color:#b3412f;font-weight:700}.cfg-status.ok{color:var(--accent);font-weight:700}
 @media(max-width:520px){.cfg-panel{top:0;right:0;bottom:0;width:100%;border-radius:0}.cfg-grid{grid-template-columns:1fr}.cfg-control.wide{grid-column:auto}.cfg-facts{grid-template-columns:repeat(2,1fr)}.cfg-fab{right:12px;bottom:12px}}
 @media print{.cfg-fab,.cfg-panel,.cfg-back{display:none}}`;
 
-function control([k,label,min,max,step],wide){return `<div class="cfg-control${wide?' wide':''}"><label for="cfg_${k}_n"><span class="cfg-name">${label}</span><span class="cfg-val"><input id="cfg_${k}_n" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}"><em>${k==='levels'?'':'mm'}</em></span></label><input id="cfg_${k}" type="range" min="${min}" max="${max}" step="${step}" aria-label="${label}"></div>`}
+function control([k,label,min,max,step],wide){return `<div class="cfg-control${wide?' wide':''}"><label for="cfg_${k}_n"><span class="cfg-name">${label}</span><span class="cfg-val"><input id="cfg_${k}_n" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}"><em>${k==='levels'||k.startsWith('dividers')?'':'mm'}</em></span></label><input id="cfg_${k}" type="range" min="${min}" max="${max}" step="${step}" aria-label="${label}"></div>`}
 
+const dividerBlock=sel=>`<div class="cfg-sec">Divisori</div><div class="cfg-grid">${sel('cfg_divider_mode','Tipo',[['modulare','Modulari: scegli quanti, intagli a ogni sede'],['disegno','Disegnati: schema a mano, pezzi su misura']],true)}
+${DIVIDER_FIELDS.map(f=>control(f)).join('')}<div class="cfg-control wide cfg-dv"><span id="cfg_dv_info"></span><button id="cfg_dv_draw" type="button">Disegna i divisori…</button></div></div>`;
 function markup(){
   const sel=(id,label,opts,wide)=>`<div class="cfg-control${wide?' wide':''}"><label for="${id}"><span class="cfg-name">${label}</span></label><select id="${id}">${opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join('')}</select></div>`;
   return `<div class="cfg-back" id="cfg_back"></div><aside class="cfg-panel" id="cfg_panel" role="dialog" aria-modal="true" aria-labelledby="cfg_title">
 <div class="cfg-head"><div><h2 id="cfg_title">Configura il modulo</h2><p>Quote in millimetri. <b>Applica</b> salva la configurazione e rigenera l’anteprima 3D con i pezzi calcolati qui.</p></div><button class="cfg-x" id="cfg_close" type="button" aria-label="Chiudi"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
-<div class="cfg-grid" style="margin-top:14px">${sel('cfg_preset','Tipologia iniziale',Object.entries(PRESET_NAMES))}${sel('cfg_divider_mode','Divisori',[['open','Nessuno'],['lane','Una corsia centrale'],['grid','Griglia con tre traversi']])}${sel('cfg_wheels','Ruote sotto il cassetto',[['0','Nessuna: il cassetto scivola sulla mensola'],...O.WHEEL_COUNTS.slice(1).map(n=>[String(n),`${n} ruote Ø10 su perno Ø3,42 (${n/2} per lato)`])],true)}</div>
-${SECTIONS.map(([title,fields],si)=>`<div class="cfg-sec">${title}</div><div class="cfg-grid">${fields.map((f,i)=>control(f,fields.length%2&&i===fields.length-1)).join('')}</div>${si?'':'<label class="cfg-auto cfg-levels"><input type="checkbox" id="cfg_levels_show">Mostra più livelli nell’anteprima 3D</label>'}`).join('')}
+<div class="cfg-grid" style="margin-top:14px">${sel('cfg_preset','Tipologia iniziale',Object.entries(PRESET_NAMES))}${sel('cfg_wheels','Ruote sotto il cassetto',[['0','Nessuna: il cassetto scivola sulla mensola'],...O.WHEEL_COUNTS.slice(1).map(n=>[String(n),`${n} ruote Ø10 su perno Ø3,42 (${n/2} per lato)`])])}</div>
+${SECTIONS.map(([title,fields],si)=>`<div class="cfg-sec">${title}</div><div class="cfg-grid">${fields.map((f,i)=>control(f,fields.length%2&&i===fields.length-1)).join('')}</div>${si?'':'<label class="cfg-auto cfg-levels"><input type="checkbox" id="cfg_levels_show">Mostra più livelli nell’anteprima 3D</label>'}${si?'':dividerBlock(sel)}`).join('')}
 <div class="cfg-sec">Pianta</div><div class="cfg-plan" id="cfg_plan"></div>
 <div class="cfg-facts"><div><b id="cfg_f_pitch"></b><span>passo mm</span></div><div><b id="cfg_f_tray"></b><span>cassetto mm</span></div><div><b id="cfg_f_grooves"></b><span>sedi per lato</span></div><div><b id="cfg_f_total"></b><span>telaio mm</span></div></div>
 <div class="cfg-actions"><button id="cfg_apply" type="button">Applica all’anteprima</button><button id="cfg_zip" class="sec" type="button">Scarica ZIP STL</button><button id="cfg_std" class="sec" type="button">Predefinito</button><label class="cfg-auto"><input type="checkbox" id="cfg_auto">Applica automaticamente a ogni modifica</label><p class="cfg-status" id="cfg_status" role="status" aria-live="polite"></p></div>
 </aside><button class="cfg-fab" id="cfg_fab" type="button" aria-controls="cfg_panel"><i></i>Configura<small id="cfg_fab_info"></small></button>`}
 
-function readForm(){const c={preset:$('cfg_preset').value,divider_mode:$('cfg_divider_mode').value,wheels:Number($('cfg_wheels').value)};for(const k of O.numeric)c[k]=Number($(`cfg_${k}_n`).value);return c}
-function writeForm(c){$('cfg_preset').value=PRESET_NAMES[c.preset]?c.preset:'custom';$('cfg_divider_mode').value=c.divider_mode;$('cfg_wheels').value=String(O.wheelCount(c));for(const k of O.numeric){$(`cfg_${k}_n`).value=c[k];$(`cfg_${k}`).value=c[k]}}
+function readForm(){const c={preset:$('cfg_preset').value,divider_mode:$('cfg_divider_mode').value,wheels:Number($('cfg_wheels').value)};for(const k of [...O.numeric,...DIVIDER_KEYS])c[k]=Number($(`cfg_${k}_n`).value);
+  if(c.divider_mode==='disegno')c.divider_layout=drawn||{v:[],h:[]};return c}
+// le vecchie modalità (open/lane/grid) diventano numeri di divisori modulari
+function writeForm(c){const sp=O.dividerSpec(c);$('cfg_preset').value=PRESET_NAMES[c.preset]?c.preset:'custom';$('cfg_divider_mode').value=sp.mode;$('cfg_wheels').value=String(O.wheelCount(c));
+  const counts=sp.mode==='modulare'?{dividers_long:sp.long,dividers_cross:sp.cross}:{dividers_long:c.dividers_long??1,dividers_cross:c.dividers_cross??0};
+  drawn=sp.mode==='disegno'?{v:sp.v,h:sp.h}:null;
+  for(const k of O.numeric){$(`cfg_${k}_n`).value=c[k];$(`cfg_${k}`).value=c[k]}for(const k of DIVIDER_KEYS){$(`cfg_${k}_n`).value=counts[k];$(`cfg_${k}`).value=counts[k]}}
+// sezione Divisori: campi visibili, massimi, riepilogo dei pezzi
+function dividerUi(c){const g=O.dividerGrid(c),mod=c.divider_mode!=='disegno';
+  DIVIDER_KEYS.forEach((k,i)=>{const max=i?g.ys.length:g.xs.length;$(`cfg_${k}`).max=$(`cfg_${k}_n`).max=max;$(`cfg_${k}_n`).closest('.cfg-control').hidden=!mod});
+  let runs=[];try{runs=O.dividerRuns(c)}catch(_){}
+  const n=a=>runs.filter(r=>r.axis===a).length;
+  $('cfg_dv_info').innerHTML=mod?`Sedi: ${g.xs.length} per i longitudinali, ${g.ys.length} per i trasversali. Ogni pezzo ha un intaglio a ogni sede: si sposta e si incrocia come vuoi.`
+    :runs.length?`Schema a mano: <b>${n('v')}</b> longitudinali e <b>${n('h')}</b> trasversali su misura, intagli solo agli incroci.`:'Schema vuoto: nessun divisorio.';
+  $('cfg_dv_draw').textContent=mod?'Disegna i divisori…':'Modifica lo schema…'}
 function matchingPreset(c){return Object.keys(O.PRESETS).find(p=>O.PRESETS[p].every((v,i)=>c[PRESET_KEYS[i]]===v))||'custom'}
 function status(text,cls=''){const s=$('cfg_status');s.textContent=text;s.className='cfg-status'+(cls?' '+cls:'')}
 
@@ -485,7 +665,7 @@ function planSvg(c){const w=c.width_mm,d=c.depth_mm,post=c.post_mm,tw=w-2*post-2
   for(const x of xs)svg+=line(x,y0+wall,x,y0+wall+g)+line(x,y0+td-wall,x,y0+td-wall-g);
   for(const y of ys)svg+=line(x0+wall,cy+y,x0+wall+g,cy+y)+line(x0+tw-wall,cy+y,x0+tw-wall-g,cy+y);
   if(O.wheelCount(c)){const wi=tw/2-wall;for(const s of [-1,1])for(const y of O.wheelYs(c).map(v=>cy+v))svg+=`<rect x="${r(s>0?wi-3.3:-wi+0.3)}" y="${r(y-5)}" width="3" height="10" rx="1" fill="#d9a441" stroke="#8a6414" stroke-width="0.6"/>`}
-  if(c.divider_mode!=='open'){svg+=`<rect x="${-thick/2}" y="${y0+wall}" width="${thick}" height="${td-2*wall}" fill="#b97058"/>`;if(c.divider_mode==='grid'){const t=(td-2*wall)/4;for(const y of new Set([-t,0,t].map(v=>ys.reduce((a,b)=>Math.abs(a-v)<Math.abs(b-v)?a:b))))svg+=`<rect x="${x0+wall}" y="${cy+y-thick/2}" width="${tw-2*wall}" height="${thick}" fill="#b97058"/>`}}
+  for(const q of O.dividerRuns(c))svg+=q.axis==='v'?`<rect x="${r(q.line-thick/2)}" y="${r(cy+q.u0)}" width="${thick}" height="${r(q.u1-q.u0)}" fill="#b97058"/>`:`<rect x="${r(q.u0)}" y="${r(cy+q.line-thick/2)}" width="${r(q.u1-q.u0)}" height="${thick}" fill="#b97058"/>`;
   for(const x of [-w/2,w/2-post])for(const y of [-d/2,d/2-post])svg+=`<rect x="${x}" y="${y}" width="${post}" height="${post}" fill="#d7cbb0" stroke="#958b77"/>`;
   // Il fronte (cassetto estraibile) è a y negativa: in pianta lo mostriamo in basso.
   return svg.replace('<rect','<g transform="scale(1,-1)"><rect')+`</g><text x="0" y="${r(d/2+22)}" text-anchor="middle" font-size="11" fill="#50665b">FRONTE / ESTRAZIONE ↓</text></svg>`}
@@ -496,7 +676,7 @@ const bedText=b=>`${fmt(b.x)} × ${fmt(b.y)} × ${fmt(b.z)} mm`;
 // i pezzi si rigenerano con le misure scelte: l'avviso della stampante rimanda al configuratore
 window.STAMPANTE_SUGGERIMENTO='Le misure sono configurabili: riducile con <a href="#configura">Configura</a> e i pezzi si rigenerano per la tua stampante.';
 
-function render(){let c;try{c=O.validate(readForm())}catch(e){status(e.message,'err');$('cfg_apply').disabled=$('cfg_zip').disabled=true;return}
+function render(){let c;try{dividerUi(readForm())}catch(_){}try{c=O.validate(readForm())}catch(e){status(e.message,'err');$('cfg_apply').disabled=$('cfg_zip').disabled=true;return}
   $('cfg_apply').disabled=$('cfg_zip').disabled=false;
   const bed=getBed(),area=bedText(bed),big=O.oversize(O.partsForConfig(c),bed);
   if(big.length)status(`Oltre l’area di stampa ${area}: ${big.map(b=>`${b.id} ${b.name.replace(/_L1$/,'').replace(/_/g,' ')} (${b.dims.map(v=>fmt(round(v))).join(' × ')})`).join(', ')}.`,'err');
@@ -510,16 +690,20 @@ async function downloadZip(){let c;try{c=O.validate(readForm())}catch(e){status(
   const b=$('cfg_zip');b.disabled=true;status('Calcolo STL in corso…');await new Promise(r=>setTimeout(r,25));
   try{const parts=O.partsForConfig(c),entries=[],enc=new TextEncoder(),manifest={generator:'Organizer JS offline',unit:'mm',configuration:c,note:'Un modulo geometrico preliminare con tenoni a L, sedi, longheroni con guida integrata e presa cava integrata; verificare con provini.',parts:[]};
     for(const p of parts){const stl=O.stlBytes(p.name,O.stlTris(p)),file=`stl/${p.id}_${p.name}.stl`;entries.push({name:file,data:stl.bytes});manifest.parts.push({id:p.id,name:p.name,group:p.group,file,copies:c.levels*(p.count||1),assembled_bounds:stl.bounds,dimensions_mm:stl.dims,triangles:stl.triangles})}
-    const readme=['ORGANIZER MODULARE - STL PRELIMINARI','',`Un modulo, da ripetere ${c.levels} volte. Le quote sono in millimetri.`,`Ingombro telaio: ${c.width_mm} x ${c.depth_mm} x ${c.tray_height_mm+c.clearance_above_mm} mm per livello.`,`Scanalature: passo ${c.groove_pitch_mm} mm, larghezza ${c.groove_width_mm} mm, profondita ${c.groove_depth_mm} mm.`,'','Tenoni 6 x 5 x 8 mm con dente a L di 1,5 mm: inserire il traverso sollevato e poi abbassarlo. Gioco nominale 0,35 mm per lato; longherone basso, guida e fermo sono un pezzo unico; presa cava integrata. Verificare piano di stampa, giochi, portata e montaggio con provini.',...(O.wheelCount(c)?['',`Ruote: stampare ${O.wheelCount(c)*c.levels} ruote Ø10 x 3 mm (piatte) e ${O.wheelCount(c)*c.levels} perni Ø3,42 x ${O.round(O.WHEEL.slot+2.2+c.wall_mm-0.3,2)} mm (in piedi, stesso profilo dei perni Sakura). Ogni ruota entra nella sua sede sotto il cassetto; il perno si spinge dall'esterno della sponda fino a filo e resta bloccato dalla guida. La mensola della guida e' 2 mm piu' bassa: usare i Longherone_guida di questo pacchetto.`]:[]),''].join('\n');
+    const readme=['ORGANIZER MODULARE - STL PRELIMINARI','',`Un modulo, da ripetere ${c.levels} volte. Le quote sono in millimetri.`,`Ingombro telaio: ${c.width_mm} x ${c.depth_mm} x ${c.tray_height_mm+c.clearance_above_mm} mm per livello.`,`Scanalature: passo ${c.groove_pitch_mm} mm, larghezza ${c.groove_width_mm} mm, profondita ${c.groove_depth_mm} mm.`,dividerText(c),'','Tenoni 6 x 5 x 8 mm con dente a L di 1,5 mm: inserire il traverso sollevato e poi abbassarlo. Gioco nominale 0,35 mm per lato; longherone basso, guida e fermo sono un pezzo unico; presa cava integrata. Verificare piano di stampa, giochi, portata e montaggio con provini.',...(O.wheelCount(c)?['',`Ruote: stampare ${O.wheelCount(c)*c.levels} ruote Ø10 x 3 mm (piatte) e ${O.wheelCount(c)*c.levels} perni Ø3,42 x ${O.round(O.WHEEL.slot+2.2+c.wall_mm-0.3,2)} mm (in piedi, stesso profilo dei perni Sakura). Ogni ruota entra nella sua sede sotto il cassetto; il perno si spinge dall'esterno della sponda fino a filo e resta bloccato dalla guida. La mensola della guida e' 2 mm piu' bassa: usare i Longherone_guida di questo pacchetto.`]:[]),''].join('\n');
     entries.push({name:'manifest.json',data:enc.encode(JSON.stringify(manifest,null,2))},{name:'configurazione.json',data:enc.encode(JSON.stringify(c,null,2))},{name:'LEGGIMI.txt',data:enc.encode(readme)});
     const bytes=O.makeZip(entries),url=URL.createObjectURL(new Blob([bytes],{type:'application/zip'})),a=document.createElement('a');
-    a.href=url;a.download=`Organizer_${c.width_mm}x${c.depth_mm}_${c.divider_mode}${O.wheelCount(c)?`_${O.wheelCount(c)}ruote`:''}_${c.levels}livelli.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+    a.href=url;a.download=`Organizer_${c.width_mm}x${c.depth_mm}_${dividerTag(c)}${O.wheelCount(c)?`_${O.wheelCount(c)}ruote`:''}_${c.levels}livelli.zip`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
     status(`ZIP creato: ${parts.length} STL per modulo, ${Math.round(bytes.length/1024)} KiB.`,'ok')}
   catch(e){status('Errore: '+e.message,'err');console.error(e)}finally{b.disabled=false}}
 
+function dividerTag(c){const sp=O.dividerSpec(c);return sp.mode==='disegno'?'divisori-disegnati':`divisori${sp.long}x${sp.cross}`}
+function dividerText(c){const runs=O.dividerRuns(c),nv=runs.filter(r=>r.axis==='v').length,nh=runs.length-nv;
+  if(!runs.length)return 'Divisori: nessuno.';
+  return `Divisori: ${nv} longitudinali e ${nh} trasversali per cassetto (quantita nel manifest). I longitudinali hanno gli intagli in alto, i trasversali in basso: si incastrano a mezzo legno. ${O.dividerSpec(c).mode==='disegno'?'Schema disegnato: ogni pezzo ha gli intagli solo dove incrocia un altro.':'Ogni pezzo ha un intaglio a ogni sede, quindi si puo spostare in qualsiasi sede.'}`}
 // Dopo il ricaricamento si ritrovano pannello, scroll e inquadratura (variabili globali del visualizzatore).
 const KEY_RESTORE='organizer-ripristino',KEY_AUTO='organizer-auto-applica';
-const same=(a,b)=>!!a&&!!b&&O.numeric.every(k=>a[k]===b[k])&&a.divider_mode===b.divider_mode&&O.wheelCount(a)===O.wheelCount(b);
+const same=(a,b)=>!!a&&!!b&&O.numeric.every(k=>a[k]===b[k])&&O.dividerKey(a)===O.dividerKey(b)&&O.wheelCount(a)===O.wheelCount(b);
 function saveView(){const v={open:document.documentElement.classList.contains('cfg-open'),panel:$('cfg_panel').scrollTop,page:scrollY};
   try{Object.assign(v,{yaw,pitch,zoom,panX,panY,explode,selected})}catch(_){}
   try{sessionStorage.setItem(KEY_RESTORE,JSON.stringify(v))}catch(_){}}
@@ -558,7 +742,12 @@ function mount(){
   for(const k of O.numeric){const n=$(`cfg_${k}_n`),r=$(`cfg_${k}`);
     const sync=src=>{(src===n?r:n).value=src.value;if(PRESET_KEYS.includes(k))$('cfg_preset').value=matchingPreset(readForm());render()};
     n.addEventListener('input',()=>{sync(n);autoApply(500)});r.addEventListener('input',()=>{sync(r);autoApply(250)});r.addEventListener('change',()=>autoApply(60))}
-  $('cfg_divider_mode').addEventListener('change',()=>{render();autoApply(150)});
+  for(const k of DIVIDER_KEYS){const n=$(`cfg_${k}_n`),r=$(`cfg_${k}`),sync=src=>{(src===n?r:n).value=src.value;render()};
+    n.addEventListener('input',()=>{sync(n);autoApply(500)});r.addEventListener('input',()=>{sync(r);autoApply(250)});r.addEventListener('change',()=>autoApply(60))}
+  // passando a "disegnati" lo schema parte dai divisori modulari attuali
+  $('cfg_divider_mode').addEventListener('change',()=>{if($('cfg_divider_mode').value==='disegno'&&!drawn)try{const L=O.layoutEdges({...readForm(),divider_mode:'modulare'});drawn={v:[...L.v].sort(),h:[...L.h].sort()}}catch(_){drawn={v:[],h:[]}}
+    render();autoApply(150)});
+  $('cfg_dv_draw').addEventListener('click',()=>O.openDividers(readForm(),L=>{drawn=L;$('cfg_divider_mode').value='disegno';render();autoApply(60)}));
   $('cfg_wheels').addEventListener('change',()=>{render();autoApply(150)});
   $('cfg_preset').addEventListener('change',()=>{const v=O.PRESETS[$('cfg_preset').value];if(v)PRESET_KEYS.forEach((k,i)=>{$(`cfg_${k}_n`).value=v[i];$(`cfg_${k}`).value=v[i]});render();autoApply(150)});
   $('cfg_apply').addEventListener('click',()=>{try{apply(O.validate(readForm()))}catch(e){status(e.message,'err')}});
@@ -775,7 +964,8 @@ document.querySelectorAll('[data-count]').forEach(el=>el.oninput=()=>{progress[e
 $('steps').innerHTML=steps.map((s,i)=>`<button class="step" data-step="${i}" aria-pressed="false"><span class="num">${i+1}</span><b>${esc(s.title)}</b><span>${esc(s.short)}</span></button>`).join('');
 document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{explode=0;setMode(false);step(+b.dataset.step)});
 }
-</script><!--configuratore-ridisegno:fine--><!--TEMA-INIZIO--><script>(()=>{
+</script><!--configuratore-ridisegno:fine-->
+<!--TEMA-INIZIO--><script>(()=>{
 const temi=[
  {id:'system',nome:'Sistema',icona:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>'},
  {id:'light',nome:'Chiaro',icona:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'},
