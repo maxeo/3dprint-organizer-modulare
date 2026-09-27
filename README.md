@@ -21,7 +21,7 @@ CONFIG = make_config("mezzo", width_mm=170, depth_mm=220,
                      drawer_open_fraction=0.25)
 ```
 
-Preset disponibili: `standard`, `mezzo`, `basso`, `alto`, `compatto` (200 × 200). Tutti i preset hanno ogni pezzo entro un piatto 230 × 230 mm (`PRINT_BED_MM`); l’export Blender e il pannello Configura avvisano se un pezzo lo supera. Divisori: `open`, `lane`, `grid`. Si possono modificare anche `wall_mm`, `side_clearance_mm`, `vertical_clearance_mm`, `post_mm`, `joint_mm` e `joint_clearance_mm`. Il secondo cassetto è quello mostrato estratto; se c'è un solo livello, si estrae il primo.
+Preset disponibili: `standard`, `mezzo`, `basso`, `alto`, `compatto` (200 × 200). Tutti i preset hanno ogni pezzo entro un piatto 230 × 230 mm (`PRINT_BED_MM`); l’export Blender avvisa se un pezzo lo supera. Nella guida il pulsante **Stampante** (in alto a destra, accanto al tema) imposta l’area di stampa reale X × Y × Z, con alcune stampanti comuni: il pulsante diventa rosso e il pannello Configura elenca i pezzi che non entrano in nessuna orientazione a 90°. Divisori: `open`, `lane`, `grid`. Si possono modificare anche `wall_mm`, `side_clearance_mm`, `vertical_clearance_mm`, `post_mm`, `joint_mm` e `joint_clearance_mm`. Il secondo cassetto è quello mostrato estratto; se c'è un solo livello, si estrae il primo.
 
 Il modello distingue telaio, guide, cassetti e divisori in collezioni. La struttura standard misura 318 mm di altezza, più 6 mm di tenoni superiori. Le sedi sono 0,35 mm più larghe del tenone per lato.
 

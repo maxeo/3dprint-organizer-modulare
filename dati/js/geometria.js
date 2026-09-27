@@ -1,8 +1,8 @@
 // Geometria parametrica del modulo: stesse quote dello script Blender (organizer_parametrico.py).
 (function(O){
 "use strict";
-// Tutti i pezzi dei preset entrano in un piatto PRINT_BED x PRINT_BED mm.
-const PRINT_BED=230;
+// I preset sono pensati per un piatto 230 x 230 mm; l'area reale si imposta con il pulsante Stampante.
+const PRINT_BED={x:230,y:230,z:250};
 const PRESETS={standard:[250,240,48,58],mezzo:[140,240,48,58],basso:[250,240,30,40],alto:[250,240,80,70],compatto:[200,200,48,58]};
 const numeric=['width_mm','depth_mm','tray_height_mm','clearance_above_mm','levels','groove_pitch_mm','groove_width_mm','groove_depth_mm','divider_thickness_mm','wall_mm','post_mm','side_clearance_mm','vertical_clearance_mm'];
 const round=(v,n=2)=>Number(v.toFixed(n));
@@ -82,8 +82,8 @@ function previewMesh(adds,subs){
   return tris;
 }
 
-// Pezzi che non entrano nel piatto: le due misure maggiori devono stare in PRINT_BED
-// (il pezzo si appoggia sulla faccia più piccola; i montanti stanno in piedi).
-function oversize(parts,bed=PRINT_BED){return parts.map(p=>{const d=[0,2,4].map(k=>Math.max(...p.adds.map(b=>b[k+1]))-Math.min(...p.adds.map(b=>b[k]))).sort((a,b)=>a-b);return {id:p.id,name:p.name,dims:d}}).filter(p=>p.dims[1]>bed+1e-6||p.dims[2]>bed+1e-6)}
+// Pezzi che non entrano nell'area di stampa X x Y x Z in nessuna delle sei orientazioni a 90°.
+const PERMS=[[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]];
+function oversize(parts,bed=PRINT_BED){const B=[bed.x,bed.y,bed.z].map(v=>v+1e-6);return parts.map(p=>{const d=[0,2,4].map(k=>Math.max(...p.adds.map(b=>b[k+1]))-Math.min(...p.adds.map(b=>b[k])));return {id:p.id,name:p.name,dims:d}}).filter(p=>!PERMS.some(o=>o.every((a,k)=>p.dims[a]<=B[k])))}
 Object.assign(O,{PRINT_BED,oversize,PRESETS,numeric,round,validate,slots,partsForConfig,meshFromBoxes,previewMesh});
 })(window.OrganizerCfg=window.OrganizerCfg||{});
